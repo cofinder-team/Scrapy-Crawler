@@ -3,14 +3,19 @@ import json
 import datetime
 import html
 from scrapy_crawler.items import JgArticle
+from urllib import parse
 
 
-class JgMacbookAir13Spider(scrapy.Spider):
-    name = "Jg_MacbookAir_13"
+class JgKeywordCrawler(scrapy.Spider):
+    name = "JgKeywordCrawler"
+
+    def __init__(self, keyword=None, *args, **kwargs):
+        super(JgKeywordCrawler, self).__init__(*args, **kwargs)
+        self.keyword = keyword
 
     def start_requests(self):
         yield scrapy.Request("https://apis.naver.com/cafe-web/cafe-mobile/CafeMobileWebArticleSearchListV3" +
-                             "?cafeId=10050146&query=%EB%A7%A5%EB%B6%81%EC%97%90%EC%96%B4" +
+                             f"?cafeId=10050146&query={parse.quote(self.keyword)}" +
                              "&searchBy=1&sortBy=date&page=1&perPage=50&adUnit=MW_CAFE_BOARD", self.parse)
 
     def parse(self, response):
