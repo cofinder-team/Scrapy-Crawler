@@ -10,6 +10,7 @@
 import os
 
 BOT_NAME = "scrapy_crawler"
+SCRAPEOPS_API_KEY = os.environ.get('SCRAPEOPS_API_KEY')
 SPIDER_MODULES = ["scrapy_crawler.spiders"]
 NEWSPIDER_MODULE = "scrapy_crawler.spiders"
 
@@ -57,9 +58,17 @@ COOKIES_ENABLED = False
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
+DOWNLOADER_MIDDLEWARES = {
+   'scrapeops_scrapy.middleware.retry.RetryMiddleware': 550,
+   'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
+EXTENSIONS = {
+   "scrapy.extensions.telnet.TelnetConsole": None,
+   'scrapeops_scrapy.extension.ScrapeOpsMonitor': 500,
+}
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
