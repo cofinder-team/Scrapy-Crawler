@@ -16,7 +16,7 @@ class JgKeywordCrawler(scrapy.Spider):
     def start_requests(self):
         yield scrapy.Request("https://apis.naver.com/cafe-web/cafe-mobile/CafeMobileWebArticleSearchListV3" +
                              f"?cafeId=10050146&query={parse.quote(self.keyword)}" +
-                             "&searchBy=1&sortBy=date&page=1&perPage=50&adUnit=MW_CAFE_BOARD", self.parse)
+                             "&searchBy=1&sortBy=date&page=1&perPage=100&adUnit=MW_CAFE_BOARD", self.parse)
 
     def parse(self, response):
         res = json.loads(response.text)["message"]["result"]["articleList"]
