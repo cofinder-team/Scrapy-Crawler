@@ -8,6 +8,8 @@ import logging
 from bs4 import BeautifulSoup
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
+from scrapy.utils import project
+
 from scrapy_crawler.db.Postgres import PostgresClient
 from scrapy.exceptions import DropItem
 from scrapy.selector import Selector
@@ -19,11 +21,18 @@ class DuplicateFilterPipeline:
         self.db = PostgresClient()
         self.cur = self.db.getCursor()
 
+    def url_already_exists(self, url):
+        self.cur.execute("SELECT * FROM macguider.raw_used_item WHERE url = %s", (url,))
+        return self.cur.fetchone()
+
+    def title_already_exists(self, title):
+        self.cur.execute("SELECT * FROM macguider.raw_used_item WHERE title = %s", (title,))
+        return self.cur.fetchone()
+
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
-        self.cur.execute("SELECT * FROM macguider.raw_used_item WHERE url = %s", (adapter["url"],))
-        if self.cur.fetchone():
+        if self.url_already_exists(adapter["url"]) or self.title_already_exists(adapter["title"]):
             raise DropItem("Duplicate item found: %s" % item)
         return item
 
