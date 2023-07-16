@@ -2,12 +2,19 @@ import scrapy
 import json
 import datetime
 import html
-from scrapy_crawler.items import JgArticle
+from scrapy_crawler.web_crawler.items import JgArticle
 from urllib import parse
 
 
 class JgKeywordCrawler(scrapy.Spider):
     name = "JgKeywordCrawler"
+    custom_settings = {
+        "ITEM_PIPELINES" : {
+            "scrapy_crawler.web_crawler.pipelines.DuplicateFilterPipeline": 100,
+            "scrapy_crawler.web_crawler.pipelines.ContentScraperPipeline": 200,
+            "scrapy_crawler.web_crawler.pipelines.PostgresPipeline": 300
+        }
+    }
 
     def __init__(self, keyword=None, *args, **kwargs):
         super(JgKeywordCrawler, self).__init__(*args, **kwargs)
