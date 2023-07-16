@@ -73,3 +73,14 @@ jobs:
           region: ${{ secrets.AWS_DEFAULT_REGION }}
           deployment_package: deploy/deploy.zip
           wait_for_environment_recovery: 200
+
+      - name: Send deployment notification
+        uses: rtCamp/action-slack-notify@v2.0.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: logs
+          SLACK_USERNAME: github-actions
+          SLACK_MESSAGE: |
+            *${{ github.repository }}* has been deployed to *${{ github.ref }}* by *${{ github.actor }}*
+            ${{ github.event.head_commit.message }}
+            ${{ github.event.head_commit.url }}
