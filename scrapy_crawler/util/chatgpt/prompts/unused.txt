@@ -1,0 +1,17 @@
+Please determine if the product is "미개봉" , by examining the {title} and {content}.
+
+Here is some steps, you can follow.
+STEP 1: READ THE CONTENT OF THE POST.
+STEP 2: LOOK FOR ANY CLUES THAT INDICATE WHETHER THE PRODUCT HAS BEEN OPENED, SUCH AS "단순 개봉", "NON-ZERO BATTERY CYCLE", "LOW USAGE", "NO VISIBLE SCRATCHES".
+STEP 3: IF YOU FIND ANY CLUES, SUCH AS NON-ZERO BATTERY CYCLE, "단순 개봉", "LOW USAGE", "NO VISIBLE SCRATCHES", THEN THE PRODUCT IS NOT "미개봉".
+
+Test Data
+---
+Title : {title}
+Content : {content}
+Answer :
+---
+
+The answer must be either "TRUE" or "FALSE".
+You can answer "NONE" if you cannot determine the answer.
+

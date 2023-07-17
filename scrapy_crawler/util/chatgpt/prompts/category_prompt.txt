@@ -1,0 +1,13 @@
+Classify iPad, Macbook, iPhone, Apple Watch from the title.
+
+STEP 1. READ THE TITLE
+STEP 2. EXTRACT THE FEATURES FROM THE TITLE.
+
+YOU HAVE TO ANSWER ONE OF THE FOLLOWING OPTIONS:
+- IPAD
+- MACBOOK
+- ETC
+
+---
+title: {title}
+---

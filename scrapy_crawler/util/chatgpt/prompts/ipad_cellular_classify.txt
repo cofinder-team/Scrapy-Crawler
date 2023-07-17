@@ -1,0 +1,33 @@
+classify ipad is a cellular model.
+
+Here are some examples of the data.
+---
+Title: 아이패드 9세대 실버 셀룰러 64GB + 애플펜슬 1세대
+Content: 21.11.02일에 SKT다이렉트샵에서 구매해서 사용했습니다! 외관 흠집은 초록색 동그라미로 표시 되어 있는 거고요 그 외에 기스는 없는 걸로 보입니다! 패드랑 펜슬 박스는 어딨는지 모르겠어서 사용하고 있는 상태로 드릴 거 같아요 셀룰러 사용하실 거면 통신사 연결해서 사용하시면 되고 그냥 와이파이 연결 하셔서 사용하셔도 됩니다! 펜촉은 종이필름 사용하느라 메탈로 구매 후 바꿔서 사용했어요 원래 펜촉은 어딨는지 모르겠습니다ㅜㅜ 구매 의사나 궁금하신 사항 있으시면 연락주세요
+Answer: TRUE
+* TRUE because Title contains "셀룰러". It means ipad is a cellular model.
+---
+
+---
+Title: [미개봉]아이패드 9세대 256기가 미개봉 상품 판매해요
+Content:
+Answer: FALSE
+---
+
+---
+Title: 아이패드 9세대 64기가 팝니다.
+Content: 아이패드 9세대 64기가 팝니다. (색상은 선택가능) 직거래 희망하고 어려울 시 택배거래도 가능합니다.
+Answer: FALSE
+---
+
+
+---
+Title: {title}
+Content: {content}
+---
+
+Classify ipad is a cellular model with the above data.
+
+You should answer "TRUE" or "FALSE".
+
+if you didn't answer TRUE or FALSE, you will get 0 points.

@@ -1,0 +1,34 @@
+Classify iPad model, screen_size by examining the *title* and *content*.
+Here are some steps you can follow
+
+STEP 1. READ THE TITLE AND CONTENT
+STEP 2. CLASSIFY THE MACBOOK MODEL FROM TITLE AND CONTENT
+* YOU CAN HAVE FOLLOWING MACBOOK MODELS
+> iPad Air
+> iPad
+> iPad Pro
+> iPad Mini
+
+STEP 3. CLASSIFY THE SCREEN SIZE FROM TITLE AND CONTENT
+* YOU CAN ONLY HAVE FOLLOWING SCREEN SIZES FOR EACH MODEL.
+> iPad Mini : 8.3 INCH
+> iPad : 12.9 INCH
+> iPad Air : 10.9 INCH
+> iPad Pro : 11 INCH, 12.9 INCH
+
+IF YOU ARE NOT SURE ABOUT THE SCREEN SIZE, YOU SHOULD PUT DEFAULT VALUE FOR EACH MODEL
+> iPad Mini : 8.3 INCH
+> iPad : 12.9 INCH
+> iPad Air : 10.9 INCH
+> iPad Pro : 11 INCH
+
+---
+title: {title}
+content: {content}
+---
+
+YOU SHOULD FOLLOW THE FOLLOWING FORMAT TO SUBMIT YOUR ANSWER
+```
+MODEL=iPad MINI
+SCREEN SIZE=8.3 INCH
+```

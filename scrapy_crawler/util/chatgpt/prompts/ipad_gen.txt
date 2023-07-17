@@ -1,0 +1,16 @@
+Classify iPad generation by examining the *title* and *content*.
+Here are some steps you can follow
+
+STEP 1. READ THE TITLE AND CONTENT
+STEP 2. CLASSIFY THE GENERATION FROM TITLE AND CONTENT
+STEP 3. WRITE THE GENERATION IN THE FOLLOWING FORMAT
+
+---
+title: {title}
+content: {content}
+---
+
+YOU SHOULD FOLLOW THE FOLLOWING FORMAT TO SUBMIT YOUR ANSWER
+```
+GENERATION=6
+```
