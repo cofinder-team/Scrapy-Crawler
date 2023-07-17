@@ -1,8 +1,7 @@
 from itemadapter import ItemAdapter
 import re
 import logging
-from scrapy.exceptions import DropItem
-
+from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.util.chatgpt.chains import *
 
@@ -47,10 +46,7 @@ class CategoryClassifierPipeline:
             adapter["type"] = self.category_map[category]
 
         except IndexError or KeyError:
-            raise DropItem("Not MacBook or iPad")
-
-        if adapter["type"] != "P":
-            raise DropItem("Not iPad")
+            raise DropAndAlert(item, "Not MacBook or iPad")
 
         self.init_pipelines(adapter)
         return item
@@ -124,7 +120,7 @@ class ChipClassifierPipeline:
             adapter["gpu_core"] = int(re.findall(r"GPU_CORE=(\d+)", predict)[0])
 
         except Exception as e:
-            raise DropItem(f"[{self.name}]Unknown error : {e}")
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
 
@@ -165,7 +161,7 @@ class MacbookRamSSDClassifierPipeline:
                 adapter["ssd"] = "1TB"
 
         except Exception as e:
-            raise DropItem(f"[{self.name}]Unknown error : {e}")
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
 
@@ -192,7 +188,7 @@ class IpadModelClassifierPipeline:
             model = re.search(r"IPADPRO|IPADMINI|IPADAIR|IPAD", predict).group()
             screen_size = float(re.search(r"8.3|10.2|10.9|10|11|12.9|12", predict).group())
         except Exception as e:
-            raise DropItem(f"[{self.name}]Unknown error : {e}, {predict}")
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}, {predict}")
 
         adapter["model"] = model
         adapter["screen_size"] = screen_size
@@ -238,10 +234,10 @@ class IpadGenerationClassifierPipeline:
             if generation in self.generation_map[adapter["model"]][adapter["screen_size"]]:
                 adapter["generation"] = generation
             else:
-                raise DropItem(f"[{self.name}]Unknown generation : {generation}")
+                raise DropAndAlert(item, f"[{self.name}]Unknown generation : {generation}")
 
         except Exception as e:
-            raise DropItem(f"[{self.name}]Unknown error : {e}")
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
 
@@ -291,7 +287,7 @@ class IpadStorageClassifierPipeline:
                 " ", "")
             adapter["ssd"] = re.findall(r'SSD=(\d+)', predict)[0]
         except Exception as e:
-            raise DropItem(f"[{self.name}]Unknown error : {e}")
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
 
