@@ -3,5 +3,7 @@ itemadapter==0.8.0
 psycopg2==2.9.3
 Scrapy==2.8.0
 scrapyd
+slack_sdk
 scrapeops_scrapy
-scrapyd-client
+langchain
+openai
