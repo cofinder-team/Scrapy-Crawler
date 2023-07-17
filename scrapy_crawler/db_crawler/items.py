@@ -34,4 +34,4 @@ class DBItem(scrapy.Item):
     screen_size = scrapy.Field()
     ssd = scrapy.Field()
     unused = scrapy.Field()
-    appl`e_care_plus = scrapy.Field()
+    apple_care_plus = scrapy.Field()
