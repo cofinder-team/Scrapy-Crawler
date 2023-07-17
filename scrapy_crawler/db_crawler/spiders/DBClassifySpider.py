@@ -29,21 +29,29 @@ class DBClassifySpider(scrapy.Spider):
     def get_unclassified_items(self):
         self.cur.execute("SELECT * "
                          "FROM macguider.raw_used_item "
-                         "WHERE (item_id is NULL or type is NULL) "
-                         "AND (title like '%아이패드%') "
+                         "WHERE classified = FALSE "
                          "AND date >= '2023-07-14'"
                          "ORDER BY date ASC "
                          "LIMIT 5")
         return self.cur.fetchall()
+
+    def set_classified(self, items):
+        # Set True due to duplication
+        ids = [item[0] for item in items]
+        self.cur.execute("UPDATE macguider.raw_used_item "
+                         "SET classified = TRUE "
+                         "WHERE id IN %s", (tuple(ids),))
+        self.conn.commit()
 
     def start_requests(self):
         # Fake fetch
         yield scrapy.Request(url="https://www.google.com", callback=self.parse)
 
     def parse(self, response, **kwargs):
-        result = self.get_unclassified_items()
+        unclassified_items = self.get_unclassified_items()
+        self.set_classified(unclassified_items)
 
-        for row in result:
+        for row in unclassified_items:
             yield DBItem(
                 id=row[0],
                 writer=row[1],
