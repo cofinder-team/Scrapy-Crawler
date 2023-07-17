@@ -31,3 +31,13 @@ class LabelingSlackBot(object):
         )
 
         return result
+
+    def post_fail_message(self, id, title, source, url, message):
+        result = self.slack_client.chat_postMessage(
+            channel="데이터-라벨링",
+            blocks=SLACK_DROPPED_MESSAGE_TEMPLATE(
+                id, title, source, url, message
+            )
+        )
+
+        return result
