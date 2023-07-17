@@ -21,7 +21,6 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_DATABASE = os.environ.get('DB_DATABASE')
 SLACK_BOT_LABELING_TOKEN = os.environ.get('SLACK_BOT_LABELING_TOKEN')
-SLACK_CHANNEL_LABELING = os.environ.get('SLACK_CHANNEL_LABELING')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
