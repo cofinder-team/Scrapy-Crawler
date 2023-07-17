@@ -61,24 +61,24 @@ SLACK_MACBOOK_CLASSIFY_MESSAGE_TEMPLATE = lambda url, source, title, model, scre
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"*지금 당장 수정하러 가기:*\n<{f'www.dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
+            "text": f"*지금 당장 수정하러 가기:*\n<{f'https://dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
         }
     },
-    {
-        "type": "actions",
-        "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "emoji": True,
-                    "text": "TRUE"
-                },
-                "style": "primary",
-                "value": "true"
-            },
-        ]
-    },
+    # {
+    #     "type": "actions",
+    #     "elements": [
+    #         {
+    #             "type": "button",
+    #             "text": {
+    #                 "type": "plain_text",
+    #                 "emoji": True,
+    #                 "text": "TRUE"
+    #             },
+    #             "style": "primary",
+    #             "value": "true"
+    #         },
+    #     ]
+    # },
 ]
 
 SLACK_IPAD_CLASSIFY_MESSAGE_TEMPLATE = lambda url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus, id: [
@@ -140,24 +140,24 @@ SLACK_IPAD_CLASSIFY_MESSAGE_TEMPLATE = lambda url, source, title, model, screen_
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"*지금 당장 수정하러 가기:*\n<{f'www.dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
+            "text": f"*지금 당장 수정하러 가기:*\n<{f'https://dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
         }
     },
-    {
-        "type": "actions",
-        "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "emoji": True,
-                    "text": "TRUE"
-                },
-                "style": "primary",
-                "value": "true"
-            },
-        ]
-    },
+    # {
+    #     "type": "actions",
+    #     "elements": [
+    #         {
+    #             "type": "button",
+    #             "text": {
+    #                 "type": "plain_text",
+    #                 "emoji": True,
+    #                 "text": "TRUE"
+    #             },
+    #             "style": "primary",
+    #             "value": "true"
+    #         },
+    #     ]
+    # },
 ]
 
 SLACK_DROPPED_MESSAGE_TEMPLATE = lambda id, title, source, url, message: [
@@ -188,7 +188,7 @@ SLACK_DROPPED_MESSAGE_TEMPLATE = lambda id, title, source, url, message: [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"*지금 당장 수정하러 가기:*\n<{f'www.dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
+            "text": f"*지금 당장 수정하러 가기:*\n<{f'https://dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>"
         }
     },
 ]

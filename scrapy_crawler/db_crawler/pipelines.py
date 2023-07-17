@@ -1,6 +1,7 @@
 from itemadapter import ItemAdapter
 import re
 import logging
+from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.util.chatgpt.chains import *
@@ -22,6 +23,7 @@ class CategoryClassifierPipeline:
                 ChipClassifierPipeline.__name__,
                 MacbookRamSSDClassifierPipeline.__name__,
                 UnusedClassifierPipeline.__name__,
+                DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
             ]
         elif item["type"] == "P":
@@ -31,6 +33,7 @@ class CategoryClassifierPipeline:
                 IpadStorageClassifierPipeline.__name__,
                 IpadCellularClassifierPipeline.__name__,
                 UnusedClassifierPipeline.__name__,
+                DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
             ]
 
@@ -156,7 +159,7 @@ class MacbookRamSSDClassifierPipeline:
                                              default_ssd=default_ssd).upper().replace(" ", "")
 
             adapter["ram"] = re.findall(r'RAM=(\d+)GB', predict)[0]
-            adapter["ssd"] = re.findall(r'SSD=(\d+)', predict)[0]
+            adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
             if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
                 adapter["ssd"] = "1TB"
 
@@ -173,7 +176,7 @@ class IpadModelClassifierPipeline:
         self.ipad_chain: LLMChain = ipad_chain
         self.screen_size_map = {
             "MINI": 8.3,
-            "IPAD": 10.9,
+            "IPAD": 12.9,
         }
 
     def process_item(self, item, spider):
@@ -214,7 +217,7 @@ class IpadGenerationClassifierPipeline:
                 10.9: [4, 5],
             }),
             "IPAD": dict({
-                10.9: [8, 9, 10],
+                12.9: [8, 9, 10],
             }),
             "IPADMINI": dict({
                 8.3: [6],
@@ -285,7 +288,11 @@ class IpadStorageClassifierPipeline:
         try:
             predict = self.ipad_chain.run(title=title, content=content, default_ssd=default_storage).upper().replace(
                 " ", "")
-            adapter["ssd"] = re.findall(r'SSD=(\d+)', predict)[0]
+            adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
+
+            if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
+                adapter["ssd"] = "1TB"
+
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
@@ -362,6 +369,106 @@ class AppleCarePlusClassifierPipeline:
             except Exception as e:
                 adapter["apple_care_plus"] = False
                 return
+
+        return item
+
+
+class DBExportPipeline:
+    name = "DBExportPipeline"
+
+    def __init__(self):
+        self.db = PostgresClient()
+        self.cursor = self.db.getCursor()
+        self.model_id_map = {
+            "M": dict({
+                "MINI": dict({
+                    -1: 1
+                }),
+                "AIR": dict({
+                    13: 2,
+                }),
+                "PRO": dict({
+                    13: 3,
+                    14: 4,
+                    16: 5,
+                })
+            }),
+            "P": dict({
+                "IPADMINI": dict({
+                    8.3: 6
+                }),
+                "IPADAIR": dict({
+                    10.9: 7,
+                }),
+                "IPAD": dict({
+                    12.9: 8,
+                }),
+                "IPADPRO": dict({
+                    11: 9,
+                    12.9: 10,
+                })
+            })
+        }
+
+    def classify_item_id(self, item: ItemAdapter) -> int:
+        try:
+            model_id = self.model_id_map[item["type"]][item["model"]][item["screen_size"]]
+
+            if item["type"] == "M":
+                if item["chip"] == "M1PRO": item["chip"] = "M1Pro"
+                elif item["chip"] == "M1MAX": item["chip"] = "M1Max"
+                elif item["chip"] == "M2PRO": item["chip"] = "M2Pro"
+                elif item["chip"] == "M2MAX": item["chip"] = "M2Max"
+
+                self.cursor.execute(
+                    f"SELECT id "
+                    f"FROM macguider.item_macbook "
+                    f"WHERE model = {model_id} "
+                    f"AND chip = '{item['chip']}' "
+                    f"AND cpu = {item['cpu_core']} AND gpu = {item['gpu_core']} "
+                    f"AND ssd = \'{item['ssd']}\' AND ram = {item['ram']} ")
+
+                item_id = self.cursor.fetchone()[0]
+
+                if item_id is None:
+                    logging.error(f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}")
+            else:
+                self.cursor.execute(
+                    f"SELECT id "
+                    f"FROM macguider.item_ipad "
+                    f"WHERE model = {model_id} "
+                    f"AND gen = {item['generation']} "
+                    f"AND storage = \'{item['ssd']}\' "
+                    f"AND cellular = {item['cellular']} "
+                )
+
+                item_id = self.cursor.fetchone()[0]
+
+                if item_id is None:
+                    logging.error(f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}")
+            return item_id
+        except Exception as e:
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        if type(self).__name__ not in adapter["pipelines"]:
+            return item
+        try:
+            item_id = self.classify_item_id(adapter)
+            item_type = adapter["type"]
+
+            self.cursor.execute(
+                f"UPDATE macguider.raw_used_item "
+                f"SET item_id = {item_id}, type = '{item_type}'"
+                f"WHERE id = {adapter['id']} "
+            )
+
+            self.db.commit()
+        except Exception as e:
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
 

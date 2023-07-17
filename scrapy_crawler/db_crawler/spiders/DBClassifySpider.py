@@ -17,7 +17,8 @@ class DBClassifySpider(scrapy.Spider):
             "scrapy_crawler.db_crawler.pipelines.IpadCellularClassifierPipeline": 8,
             "scrapy_crawler.db_crawler.pipelines.UnusedClassifierPipeline": 9,
             "scrapy_crawler.db_crawler.pipelines.AppleCarePlusClassifierPipeline": 10,
-            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 11,
+            "scrapy_crawler.db_crawler.pipelines.DBExportPipeline": 11,
+            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 12,
         },
     }
 
@@ -30,18 +31,10 @@ class DBClassifySpider(scrapy.Spider):
         self.cur.execute("SELECT * "
                          "FROM macguider.raw_used_item "
                          "WHERE classified = FALSE "
+                         "AND type is NULL AND item_id is NULL "
                          "AND date >= '2023-07-14'"
-                         "ORDER BY date ASC "
-                         "LIMIT 5")
+                         "ORDER BY date ")
         return self.cur.fetchall()
-
-    def set_classified(self, items):
-        # Set True due to duplication
-        ids = [item[0] for item in items]
-        self.cur.execute("UPDATE macguider.raw_used_item "
-                         "SET classified = TRUE "
-                         "WHERE id IN %s", (tuple(ids),))
-        self.conn.commit()
 
     def start_requests(self):
         # Fake fetch
@@ -49,7 +42,6 @@ class DBClassifySpider(scrapy.Spider):
 
     def parse(self, response, **kwargs):
         unclassified_items = self.get_unclassified_items()
-        self.set_classified(unclassified_items)
 
         for row in unclassified_items:
             yield DBItem(
