@@ -462,12 +462,13 @@ class DBExportPipeline:
 
             self.cursor.execute(
                 f"UPDATE macguider.raw_used_item "
-                f"SET item_id = {item_id}, type = '{item_type}'"
+                f"SET item_id = {item_id}, type = '{item_type}' "
                 f"WHERE id = {adapter['id']} "
             )
 
             self.db.commit()
         except Exception as e:
+            self.db.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
