@@ -1,6 +1,8 @@
 from itemadapter import ItemAdapter
 import re
 import logging
+
+from scrapy_crawler.db_crawler.items import DBMacbookItem, DBIpadItem
 from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
@@ -16,18 +18,16 @@ class CategoryClassifierPipeline:
             "IPAD": "P",
         }
 
-    def init_pipelines(self, item: ItemAdapter):
-        if item["type"] == "M":
-            item["pipelines"] = [
+        self.pipeline_map = {
+            "M": [
                 MacbookModelClassifierPipeline.__name__,
                 ChipClassifierPipeline.__name__,
                 MacbookRamSSDClassifierPipeline.__name__,
                 UnusedClassifierPipeline.__name__,
                 DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
-            ]
-        elif item["type"] == "P":
-            item["pipelines"] = [
+            ],
+            "P": [
                 IpadModelClassifierPipeline.__name__,
                 IpadGenerationClassifierPipeline.__name__,
                 IpadStorageClassifierPipeline.__name__,
@@ -36,6 +36,7 @@ class CategoryClassifierPipeline:
                 DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
             ]
+        }
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
@@ -51,8 +52,8 @@ class CategoryClassifierPipeline:
         except IndexError or KeyError:
             raise DropAndAlert(item, "Not MacBook or iPad")
 
-        self.init_pipelines(adapter)
-        return item
+        adapter["pipelines"] = self.pipeline_map[adapter["type"]]
+        return DBMacbookItem(**adapter) if adapter["type"] == "M" else DBIpadItem(**adapter)
 
 
 class MacbookModelClassifierPipeline:
