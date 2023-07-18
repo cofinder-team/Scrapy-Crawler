@@ -19,22 +19,6 @@ class DBItem(scrapy.Item):
     category = scrapy.Field()
     pipelines = scrapy.Field()
 
-    #     chip = scrapy.Field()
-    #     cpu_core = scrapy.Field()
-    #     gpu_core = scrapy.Field()
-    #     ram = scrapy.Field()
-
-    # for ipad
-    # generation = scrapy.Field()
-    # cellular = scrapy.Field()
-
-    # for both
-    # model = scrapy.Field()
-    # screen_size = scrapy.Field()
-    # ssd = scrapy.Field()
-    # unused = scrapy.Field()
-    # apple_care_plus = scrapy.Field()
-
 
 class DBMacbookItem(DBItem):
     chip = scrapy.Field()
@@ -46,6 +30,7 @@ class DBMacbookItem(DBItem):
     ssd = scrapy.Field()
     unused = scrapy.Field()
     apple_care_plus = scrapy.Field()
+
 
 class DBIpadItem(DBItem):
     model = scrapy.Field()
