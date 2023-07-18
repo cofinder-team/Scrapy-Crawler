@@ -12,7 +12,7 @@ class DBItem(scrapy.Item):
     date = scrapy.Field()
     url = scrapy.Field()
     img_url = scrapy.Field()
-    type = scrapy.Field()
+    item_type = scrapy.Field()
     item_id = scrapy.Field()
 
     # for category
@@ -40,3 +40,9 @@ class DBIpadItem(DBItem):
     apple_care_plus = scrapy.Field()
     generation = scrapy.Field()
     cellular = scrapy.Field()
+
+
+class DBItemPrice(DBItem):
+    average = scrapy.Field()
+    low_price = scrapy.Field()
+    high_price = scrapy.Field()

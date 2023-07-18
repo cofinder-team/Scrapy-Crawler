@@ -54,6 +54,6 @@ class DBClassifySpider(scrapy.Spider):
                 date=row[6],
                 url=row[7],
                 img_url=row[8],
-                type=row[9],
+                item_type=row[9],
                 item_id=row[10]
             )

@@ -34,9 +34,19 @@ class LabelingSlackBot(object):
 
     def post_fail_message(self, id, title, source, url, message):
         result = self.slack_client.chat_postMessage(
-            channel="데이터-라벨링",
+            channel="slack-alert-test",
             blocks=SLACK_DROPPED_MESSAGE_TEMPLATE(
                 id, title, source, url, message
+            )
+        )
+
+        return result
+
+    def post_hotdeal_message(self, url, title, source, price, average):
+        result = self.slack_client.chat_postMessage(
+            channel="slack-alert-test",
+            blocks=SLACK_HOTDEAL_MESSAGE_TEMPLATE(
+                url, title, source, price, average
             )
         )
 

@@ -2,6 +2,8 @@ from itemadapter import ItemAdapter
 import re
 import logging
 
+from scrapy.exceptions import DropItem
+
 from scrapy_crawler.db_crawler.items import DBMacbookItem, DBIpadItem
 from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy_crawler.util.exceptions import DropAndAlert
@@ -416,10 +418,14 @@ class DBExportPipeline:
             model_id = self.model_id_map[item["type"]][item["model"]][item["screen_size"]]
 
             if item["type"] == "M":
-                if item["chip"] == "M1PRO": item["chip"] = "M1Pro"
-                elif item["chip"] == "M1MAX": item["chip"] = "M1Max"
-                elif item["chip"] == "M2PRO": item["chip"] = "M2Pro"
-                elif item["chip"] == "M2MAX": item["chip"] = "M2Max"
+                if item["chip"] == "M1PRO":
+                    item["chip"] = "M1Pro"
+                elif item["chip"] == "M1MAX":
+                    item["chip"] = "M1Max"
+                elif item["chip"] == "M2PRO":
+                    item["chip"] = "M2Pro"
+                elif item["chip"] == "M2MAX":
+                    item["chip"] = "M2Max"
 
                 self.cursor.execute(
                     f"SELECT id "
@@ -432,7 +438,8 @@ class DBExportPipeline:
                 item_id = self.cursor.fetchone()[0]
 
                 if item_id is None:
-                    logging.error(f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}")
+                    logging.error(
+                        f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}")
             else:
                 self.cursor.execute(
                     f"SELECT id "
@@ -446,7 +453,8 @@ class DBExportPipeline:
                 item_id = self.cursor.fetchone()[0]
 
                 if item_id is None:
-                    logging.error(f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}")
+                    logging.error(
+                        f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}")
             return item_id
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
@@ -475,6 +483,19 @@ class DBExportPipeline:
         return item
 
 
+class HotDealClassifierPipeline:
+    name = "HotDealClassifierPipeline"
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        if adapter["price"] > adapter["average"] * 0.95:
+            raise DropItem(f"price is too high - price({adapter['price']}) > 95%({adapter['average'] * 0.95}), average - {adapter['average']}")
+
+        return item
+
+
 class SlackAlertPipeline:
     def __init__(self):
         self.slack_bot = LabelingSlackBot()
@@ -498,7 +519,7 @@ class SlackAlertPipeline:
                 apple_care_plus=False,
                 id=adapter["id"],
             )
-        else:
+        elif adapter["type"] == "P":
             self.slack_bot.post_ipad_message(
                 url=adapter["url"],
                 source=adapter["source"],
@@ -511,5 +532,13 @@ class SlackAlertPipeline:
                 unused=adapter["unused"],
                 apple_care_plus=False,
                 id=adapter["id"],
+            )
+        else:
+            self.slack_bot.post_hotdeal_message(
+                url=adapter["url"],
+                title=adapter["title"],
+                source=adapter["source"],
+                price=adapter["price"],
+                average=adapter["average"],
             )
         return item

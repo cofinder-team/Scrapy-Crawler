@@ -193,3 +193,13 @@ SLACK_DROPPED_MESSAGE_TEMPLATE = lambda id, title, source, url, message: [
     },
 ]
 
+SLACK_HOTDEAL_MESSAGE_TEMPLATE = lambda url, title, source, price ,average: [
+    {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f"핫딜 Alert! :fire:\n<{url}|{source}>\n제목 : {title}\n가격 : {price}\n평균가 : {average}"
+        }
+    },
+]
+
