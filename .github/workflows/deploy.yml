@@ -75,7 +75,7 @@ jobs:
           wait_for_environment_recovery: 200
 
       - name: Send deployment notification
-        uses: rtCamp/action-slack-notify@v2.0.0
+        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_CHANNEL: logs
