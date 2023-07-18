@@ -13,7 +13,7 @@ class LabelingSlackBot(object):
     def post_macbook_message(self, url, source, title, model, screen_size, chip, cpu, ram, ssd, unused, apple_care_plus,
                              id):
         result = self.slack_client.chat_postMessage(
-            channel="데이터-라벨링",
+            channel="slack-alert-test",
             blocks=SLACK_MACBOOK_CLASSIFY_MESSAGE_TEMPLATE(
                 url, source, title, model, screen_size, chip, cpu, ram, ssd, unused, apple_care_plus, id
             )
@@ -24,7 +24,7 @@ class LabelingSlackBot(object):
     def post_ipad_message(self, url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus,
                           id):
         result = self.slack_client.chat_postMessage(
-            channel="데이터-라벨링",
+            channel="slack-alert-test",
             blocks=SLACK_IPAD_CLASSIFY_MESSAGE_TEMPLATE(
                 url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus, id
             )
