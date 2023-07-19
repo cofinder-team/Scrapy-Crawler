@@ -530,7 +530,7 @@ class HotDealClassifierPipeline:
             response = requests.get(price_url)
             response.raise_for_status()
             resp = response.json()
-            average = resp['average']
+            average = resp['price_20']
             self.cache[(item['type'], item['item_id'], item['unused'])] = average
             return average if average is not None else 0
         except Exception as e:
