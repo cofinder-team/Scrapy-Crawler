@@ -203,3 +203,13 @@ SLACK_HOTDEAL_MESSAGE_TEMPLATE = lambda url, title, source, price ,average: [
     },
 ]
 
+SLACK_SOLDOUT_MESSAGE_TEMPLATE = lambda id : [
+    {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": f"해당 게시물은 판매완료 처리되었습니다. - {id}"
+        }
+    },
+]
+

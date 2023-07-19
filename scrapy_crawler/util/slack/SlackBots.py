@@ -51,3 +51,13 @@ class LabelingSlackBot(object):
         )
 
         return result
+
+    def post_soldout_message(self, url):
+        result = self.slack_client.chat_postMessage(
+            channel="soldout-alert",
+            blocks=SLACK_SOLDOUT_MESSAGE_TEMPLATE(
+                url
+            )
+        )
+
+        return result

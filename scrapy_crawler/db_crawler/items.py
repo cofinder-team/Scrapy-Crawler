@@ -47,3 +47,10 @@ class DBItemPrice(DBItem):
     average = scrapy.Field()
     low_price = scrapy.Field()
     high_price = scrapy.Field()
+
+
+class JgArticle(scrapy.Item):
+    id = scrapy.Field()
+    price = scrapy.Field()
+    status = scrapy.Field()
+    type = scrapy.Field()

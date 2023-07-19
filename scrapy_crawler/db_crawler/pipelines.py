@@ -497,6 +497,38 @@ class HotDealClassifierPipeline:
         return item
 
 
+class SoldOutClassifierPipeline:
+    name = "SoldOutClassifierPipeline"
+
+    def __init__(self):
+        self.db = PostgresClient()
+        self.cursor = self.db.getCursor()
+
+    def set_sold_out(self, item: ItemAdapter):
+        try:
+            self.cursor.execute(
+                f"UPDATE macguider.deal "
+                f"SET sold = true "
+                f"WHERE id = {item['id']} "
+            )
+
+            self.db.commit()
+        except Exception as e:
+            self.db.rollback()
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        if adapter["status"] != "SOLD_OUT":
+            raise DropItem("item is on sale")
+
+        self.set_sold_out(adapter)
+        item["type"] = "SOLD_OUT"
+        return item
+
+
 class SlackAlertPipeline:
     def __init__(self):
         self.slack_bot = LabelingSlackBot()
@@ -533,6 +565,10 @@ class SlackAlertPipeline:
                 unused=adapter["unused"],
                 apple_care_plus=False,
                 id=adapter["id"],
+            )
+        elif adapter["type"] == "SOLD_OUT":
+            self.slack_bot.post_soldout_message(
+                url=adapter["id"],
             )
         else:
             self.slack_bot.post_hotdeal_message(
