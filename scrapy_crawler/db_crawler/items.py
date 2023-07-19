@@ -12,7 +12,7 @@ class DBItem(scrapy.Item):
     date = scrapy.Field()
     url = scrapy.Field()
     img_url = scrapy.Field()
-    item_type = scrapy.Field()
+    type = scrapy.Field()
     item_id = scrapy.Field()
 
     # for category
