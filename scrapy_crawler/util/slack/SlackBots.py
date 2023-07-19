@@ -10,31 +10,9 @@ class LabelingSlackBot(object):
         self.slack_channel = self.settings.get('SLACK_CHANNEL_LABELING')
         self.slack_client = WebClient(token=self.slack_token)
 
-    def post_macbook_message(self, url, source, title, model, screen_size, chip, cpu, ram, ssd, unused, apple_care_plus,
-                             id):
-        result = self.slack_client.chat_postMessage(
-            channel="slack-alert-test",
-            blocks=SLACK_MACBOOK_CLASSIFY_MESSAGE_TEMPLATE(
-                url, source, title, model, screen_size, chip, cpu, ram, ssd, unused, apple_care_plus, id
-            )
-        )
-
-        return result
-
-    def post_ipad_message(self, url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus,
-                          id):
-        result = self.slack_client.chat_postMessage(
-            channel="classify-alert",
-            blocks=SLACK_IPAD_CLASSIFY_MESSAGE_TEMPLATE(
-                url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus, id
-            )
-        )
-
-        return result
-
     def post_fail_message(self, id, title, source, url, message):
         result = self.slack_client.chat_postMessage(
-            channel="classify-alert",
+            channel="fail-alert",
             blocks=SLACK_DROPPED_MESSAGE_TEMPLATE(
                 id, title, source, url, message
             )
@@ -42,11 +20,11 @@ class LabelingSlackBot(object):
 
         return result
 
-    def post_hotdeal_message(self, url, title, source, price, average):
+    def post_hotdeal_message(self, console_url):
         result = self.slack_client.chat_postMessage(
             channel="hotdeal-alert",
             blocks=SLACK_HOTDEAL_MESSAGE_TEMPLATE(
-                url, title, source, price, average
+                console_url
             )
         )
 

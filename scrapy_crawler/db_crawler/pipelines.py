@@ -1,7 +1,8 @@
 from itemadapter import ItemAdapter
 import re
 import logging
-
+import requests
+import json
 from scrapy.exceptions import DropItem
 
 from scrapy_crawler.db_crawler.items import DBMacbookItem, DBIpadItem
@@ -27,6 +28,8 @@ class CategoryClassifierPipeline:
                 MacbookRamSSDClassifierPipeline.__name__,
                 UnusedClassifierPipeline.__name__,
                 DBExportPipeline.__name__,
+                HotDealClassifierPipeline.__name__,
+                DBItemClassifierPipeline.__name__,
                 SlackAlertPipeline.__name__,
             ],
             "P": [
@@ -35,6 +38,8 @@ class CategoryClassifierPipeline:
                 IpadStorageClassifierPipeline.__name__,
                 IpadCellularClassifierPipeline.__name__,
                 UnusedClassifierPipeline.__name__,
+                HotDealClassifierPipeline.__name__,
+                DBItemClassifierPipeline.__name__,
                 DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
             ]
@@ -295,6 +300,8 @@ class IpadStorageClassifierPipeline:
 
             if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
                 adapter["ssd"] = "1TB"
+            elif adapter["ssd"] == "500GB":
+                adapter["ssd"] = "512GB"
 
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
@@ -376,8 +383,8 @@ class AppleCarePlusClassifierPipeline:
         return item
 
 
-class DBExportPipeline:
-    name = "DBExportPipeline"
+class DBItemClassifierPipeline:
+    name = "DBItemClassifierPipeline"
 
     def __init__(self):
         self.db = PostgresClient()
@@ -465,8 +472,31 @@ class DBExportPipeline:
 
         if type(self).__name__ not in adapter["pipelines"]:
             return item
+
         try:
             item_id = self.classify_item_id(adapter)
+            item["item_id"] = item_id
+        except Exception as e:
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
+        return item
+
+
+class DBExportPipeline:
+    name = "DBExportPipeline"
+
+    def __init__(self):
+        self.db = PostgresClient()
+        self.cursor = self.db.getCursor()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        if type(self).__name__ not in adapter["pipelines"]:
+            return item
+        try:
+            item_id = adapter["item_id"]
             item_type = adapter["type"]
 
             self.cursor.execute(
@@ -486,13 +516,34 @@ class DBExportPipeline:
 class HotDealClassifierPipeline:
     name = "HotDealClassifierPipeline"
 
+    def __init__(self):
+        self.cache = {}
+
+    def get_model_price(self, item: ItemAdapter):
+        if (item['type'], item['item_id'], item['unused']) in self.cache:
+            logging.info(f"[{self.name}] cache hit")
+            return self.cache[(item['type'], item['item_id'], item['unused'])]
+
+        price_url = f"https://dev-api.macguider.io/price/deal/{item['type']}/{item['item_id']}?unused={'true' if item['unused'] else 'false'}"
+
+        try:
+            response = requests.get(price_url)
+            response.raise_for_status()
+            resp = response.json()
+            average = resp['average']
+            self.cache[(item['type'], item['item_id'], item['unused'])] = average
+            return average if average is not None else 0
+        except Exception as e:
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
-        if adapter["price"] > adapter["average"]:
-            raise DropItem("price is too high")
-            # raise DropAndAlert(item, f"price is too high - price({adapter['price']}) > 95%({adapter['average'] * 0.95}), average - {adapter['average']} - {adapter['url']}")
+        average = self.get_model_price(adapter)
+
+        if adapter["price"] > average:
+            raise DropAndAlert(item, f"price is too high: {adapter['price']} > {average}")
 
         return item
 
@@ -537,45 +588,12 @@ class SlackAlertPipeline:
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
-        if adapter["type"] == "M":
-            self.slack_bot.post_macbook_message(
-                url=adapter["url"],
-                title=adapter["title"],
-                source=adapter["source"],
-                model=adapter["model"],
-                screen_size=adapter["screen_size"],
-                chip=adapter["chip"],
-                cpu=",".join([str(adapter["cpu_core"]), str(adapter["gpu_core"])]),
-                ram=adapter["ram"],
-                ssd=adapter["ssd"],
-                unused=adapter["unused"],
-                apple_care_plus=False,
-                id=adapter["id"],
-            )
-        elif adapter["type"] == "P":
-            self.slack_bot.post_ipad_message(
-                url=adapter["url"],
-                source=adapter["source"],
-                title=adapter["title"],
-                model=adapter["model"],
-                screen_size=adapter["screen_size"],
-                gen=adapter["generation"],
-                cellular=adapter["cellular"],
-                ssd=adapter["ssd"],
-                unused=adapter["unused"],
-                apple_care_plus=False,
-                id=adapter["id"],
-            )
-        elif adapter["type"] == "SOLD_OUT":
+        if adapter["type"] == "SOLD_OUT":
             self.slack_bot.post_soldout_message(
                 url=adapter["id"],
             )
         else:
             self.slack_bot.post_hotdeal_message(
-                url=adapter["url"],
-                title=adapter["title"],
-                source=adapter["source"],
-                price=adapter["price"],
-                average=adapter["average"],
+                console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
             )
         return item

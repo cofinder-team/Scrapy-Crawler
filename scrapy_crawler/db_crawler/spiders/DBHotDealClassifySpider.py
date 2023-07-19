@@ -3,8 +3,8 @@ from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy_crawler.db_crawler.items import DBItem
 
 
-class DBClassifySpider(scrapy.Spider):
-    name = "DBClassifySpider"
+class DBHotDealClassifySpider(scrapy.Spider):
+    name = "DBHotDealClassifySpider"
     custom_settings = {
         "ITEM_PIPELINES": {
             "scrapy_crawler.db_crawler.pipelines.CategoryClassifierPipeline": 1,
@@ -17,8 +17,10 @@ class DBClassifySpider(scrapy.Spider):
             "scrapy_crawler.db_crawler.pipelines.IpadCellularClassifierPipeline": 8,
             "scrapy_crawler.db_crawler.pipelines.UnusedClassifierPipeline": 9,
             "scrapy_crawler.db_crawler.pipelines.AppleCarePlusClassifierPipeline": 10,
-            "scrapy_crawler.db_crawler.pipelines.DBExportPipeline": 11,
-            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 12,
+            "scrapy_crawler.db_crawler.pipelines.DBItemClassifierPipeline": 11,
+            "scrapy_crawler.db_crawler.pipelines.HotDealClassifierPipeline": 12,
+            "scrapy_crawler.db_crawler.pipelines.DBExportPipeline": 13,
+            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 14,
         },
     }
 
