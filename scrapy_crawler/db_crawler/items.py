@@ -43,6 +43,7 @@ class DBIpadItem(DBItem):
 
 
 class DBItemPrice(DBItem):
+    type = scrapy.Field()
     average = scrapy.Field()
     low_price = scrapy.Field()
     high_price = scrapy.Field()
