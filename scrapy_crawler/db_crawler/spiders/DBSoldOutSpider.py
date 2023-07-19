@@ -8,8 +8,8 @@ class DBSoldOutSpider(scrapy.Spider):
     name = "DBSoldOutSpider"
     custom_settings = {
         "ITEM_PIPELINES": {
-        "scrapy_crawler.db_crawler.pipelines.SoldOutClassifierPipeline": 1,
-        "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 2,
+            "scrapy_crawler.db_crawler.pipelines.SoldOutClassifierPipeline": 1,
+            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 2,
         },
     }
 
@@ -31,9 +31,15 @@ class DBSoldOutSpider(scrapy.Spider):
         for row in unsold_items:
             id = row[0]
             url = row[7].split("/")[-1]
-            yield scrapy.Request(url=f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}", callback=self.parse, meta={"item_id": id})
+            yield scrapy.Request(
+                url=f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}",
+                callback=self.parse, meta={"item_id": id})
 
     def parse(self, response, **kwargs):
+        # 글이 삭제된 경우
+        if response.status == 404:
+            yield JgArticle(id=response.meta["item_id"], price=0, status="SOLD_OUT")
+
         item_id = response.meta["item_id"]
         saleInfo = json.loads(response.text)["result"]["saleInfo"]
 

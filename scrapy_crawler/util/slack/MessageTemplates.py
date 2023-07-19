@@ -46,7 +46,7 @@ SLACK_SOLDOUT_MESSAGE_TEMPLATE = lambda item_id: [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"해당 게시물은 판매완료 처리되었습니다. - {item_id}"
+            "text": f"해당 글은 삭제 혹은 판매완료 되었습니다. - {item_id}"
         }
     },
 ]
