@@ -471,7 +471,7 @@ class DBExportPipeline:
 
             self.cursor.execute(
                 f"UPDATE macguider.raw_used_item "
-                f"SET item_id = {item_id}, type = '{item_type}' "
+                f"SET item_id = {item_id}, type = '{item_type}', unused = {adapter['unused']} "
                 f"WHERE id = {adapter['id']} "
             )
 
