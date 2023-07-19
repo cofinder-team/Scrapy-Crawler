@@ -24,7 +24,7 @@ class LabelingSlackBot(object):
     def post_ipad_message(self, url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus,
                           id):
         result = self.slack_client.chat_postMessage(
-            channel="slack-alert-test",
+            channel="classify-alert",
             blocks=SLACK_IPAD_CLASSIFY_MESSAGE_TEMPLATE(
                 url, source, title, model, screen_size, gen, cellular, ssd, unused, apple_care_plus, id
             )
@@ -34,7 +34,7 @@ class LabelingSlackBot(object):
 
     def post_fail_message(self, id, title, source, url, message):
         result = self.slack_client.chat_postMessage(
-            channel="slack-alert-test",
+            channel="classify-alert",
             blocks=SLACK_DROPPED_MESSAGE_TEMPLATE(
                 id, title, source, url, message
             )
@@ -44,7 +44,7 @@ class LabelingSlackBot(object):
 
     def post_hotdeal_message(self, url, title, source, price, average):
         result = self.slack_client.chat_postMessage(
-            channel="slack-alert-test",
+            channel="hotdeal-alert",
             blocks=SLACK_HOTDEAL_MESSAGE_TEMPLATE(
                 url, title, source, price, average
             )
