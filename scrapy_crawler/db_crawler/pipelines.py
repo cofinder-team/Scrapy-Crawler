@@ -490,8 +490,9 @@ class HotDealClassifierPipeline:
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
-        if adapter["price"] > adapter["average"] * 0.95:
-            raise DropItem(f"price is too high - price({adapter['price']}) > 95%({adapter['average'] * 0.95}), average - {adapter['average']}")
+        if adapter["price"] > adapter["average"]:
+            raise DropItem("price is too high")
+            # raise DropAndAlert(item, f"price is too high - price({adapter['price']}) > 95%({adapter['average'] * 0.95}), average - {adapter['average']} - {adapter['url']}")
 
         return item
 

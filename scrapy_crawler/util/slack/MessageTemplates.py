@@ -198,7 +198,7 @@ SLACK_HOTDEAL_MESSAGE_TEMPLATE = lambda url, title, source, price ,average: [
         "type": "section",
         "text": {
             "type": "mrkdwn",
-            "text": f"핫딜 Alert! :fire:\n<{url}|{source}>\n제목 : {title}\n가격 : {price}\n평균가 : {average}"
+            "text": f"핫딜 Alert! :fire:\n<{url}|{source}>\n제목 : {title}\n가격 : {price}\n평균가 : {average}\n할인율 : {round((1 - (price / average)) * 100, 2)}%"
         }
     },
 ]
