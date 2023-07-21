@@ -1,11 +1,19 @@
-# 베이스 이미지를 선택합니다.
-FROM python:3.10
+# Base image (Amazon Linux 2 with Python 3.8)
+FROM amazonlinux:2
+
+
+
+# Install Python and required packages
+
+# Install dependencies, CloudWatch Agent, and configure
+RUN yum update -y && \
+    yum install -y amazon-cloudwatch-agent python3 python-pip postgresql-devel
+
+COPY amazon-cloudwatch-agent.json /etc/cloudwatch/
 
 # 작업 디렉토리를 설정합니다.
 WORKDIR /app
 
-# Scrapyd를 설치합니다.
-RUN pip install scrapyd
 
 # Scrapyd의 설정 파일을 복사합니다.
 COPY scrapyd.conf /etc/scrapyd/
@@ -18,8 +26,7 @@ COPY ./scrapy_crawler /app/scrapy_crawler
 COPY ./requirements.txt /app/scrapy_crawler
 
 # 필요한 종속성을 설치합니다.
-RUN pip install -r /app/scrapy_crawler/requirements.txt
-RUN pip install scrapy
+RUN python3 -m pip install -r /app/scrapy_crawler/requirements.txt
 
 # Scrapyd 서버의 포트를 노출합니다.
 EXPOSE 6800
