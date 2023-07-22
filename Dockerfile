@@ -17,6 +17,9 @@ COPY scrapy.cfg /app/
 COPY ./scrapy_crawler /app/scrapy_crawler
 COPY ./requirements.txt /app/scrapy_crawler
 
+# CloudWatch Agent 설정 파일을 복사합니다.
+COPY ./amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
 # 필요한 종속성을 설치합니다.
 RUN pip install -r /app/scrapy_crawler/requirements.txt
 RUN pip install scrapy
