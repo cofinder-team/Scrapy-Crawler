@@ -9,7 +9,8 @@ class DBSoldOutSpider(scrapy.Spider):
     custom_settings = {
         "ITEM_PIPELINES": {
             "scrapy_crawler.db_crawler.pipelines.SoldOutClassifierPipeline": 1,
-            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 2,
+            "scrapy_crawler.db_crawler.pipelines.DBUpdateLastCrawledPipeline": 2,
+            "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 3,
         },
     }
 
@@ -22,7 +23,7 @@ class DBSoldOutSpider(scrapy.Spider):
         self.cur.execute("SELECT * "
                          "FROM macguider.deal "
                          "WHERE sold = false "
-                         "ORDER BY date ")
+                         "ORDER BY last_crawled ")
         return self.cur.fetchall()
 
     def start_requests(self):

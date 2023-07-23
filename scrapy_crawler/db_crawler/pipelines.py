@@ -643,6 +643,32 @@ class SoldOutClassifierPipeline:
         return item
 
 
+class DBUpdateLastCrawledPipeline:
+    name = "DBUpdateLastCrawledPipeline"
+
+    def __init__(self):
+        self.database = PostgresClient()
+        self.cursor = self.database.getCursor()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        try:
+            self.cursor.execute(
+                f"UPDATE macguider.deal "
+                f"SET last_crawled = NOW() "
+                f"WHERE id = {adapter['id']} "
+            )
+
+            self.database.commit()
+        except Exception as e:
+            self.database.rollback()
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
+        return item
+
+
 class SlackAlertPipeline:
     def __init__(self):
         self.slack_bot = LabelingSlackBot()
