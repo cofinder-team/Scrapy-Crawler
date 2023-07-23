@@ -1,6 +1,7 @@
 import datetime
 
 import scrapy
+from sqlalchemy import false
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.db_crawler.items import DBItem
@@ -36,7 +37,7 @@ class DBHotDealClassifySpider(scrapy.Spider):
     def get_unclassified_items(self) -> list[DBItem]:
         item = (
             self.session.query(RawUsedItem)
-            .filter(not RawUsedItem.classified)
+            .filter(RawUsedItem.classified is false())
             .filter(RawUsedItem.type is None)
             .filter(RawUsedItem.item_id is None)
             .filter(

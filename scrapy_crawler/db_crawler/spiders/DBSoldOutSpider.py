@@ -1,6 +1,8 @@
 import json
+from typing import Type
 
 import scrapy
+from sqlalchemy import false
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.db_crawler.items import JgArticle
@@ -22,9 +24,11 @@ class DBSoldOutSpider(scrapy.Spider):
         super().__init__(**kwargs)
         self.session = sessionmaker(bind=get_engine())()
 
-    def get_unsold_items(self) -> list[Deal]:
+    def get_unsold_items(self) -> list[Type[Deal]]:
         item = (
-            self.session.query(Deal).filter(not Deal.sold).order_by(Deal.last_crawled)
+            self.session.query(Deal)
+            .filter(Deal.sold == false())
+            .order_by(Deal.last_crawled)
         )
         return item.all()
 
