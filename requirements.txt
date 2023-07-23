@@ -11,4 +11,4 @@ slack_sdk
 boto3
 scrapeops_scrapy
 openai
-black
+pre-commit
