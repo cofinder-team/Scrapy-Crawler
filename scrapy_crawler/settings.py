@@ -10,18 +10,21 @@
 import os
 
 BOT_NAME = "scrapy_crawler"
-SCRAPEOPS_API_KEY = os.environ.get('SCRAPEOPS_API_KEY')
-SPIDER_MODULES = ["scrapy_crawler.web_crawler.spiders", "scrapy_crawler.db_crawler.spiders"]
+SCRAPEOPS_API_KEY = os.environ.get("SCRAPEOPS_API_KEY")
+SPIDER_MODULES = [
+    "scrapy_crawler.web_crawler.spiders",
+    "scrapy_crawler.db_crawler.spiders",
+]
 NEWSPIDER_MODULE = "scrapy_crawler.spiders"
 
 # ENV
-DB_HOST = os.environ.get('DB_HOST')
-DB_PORT = os.environ.get('DB_PORT')
-DB_USER = os.environ.get('DB_USER')
-DB_PASSWORD = os.environ.get('DB_PASSWORD')
-DB_DATABASE = os.environ.get('DB_DATABASE')
-SLACK_BOT_LABELING_TOKEN = os.environ.get('SLACK_BOT_LABELING_TOKEN')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+DB_HOST = os.environ.get("DB_HOST")
+DB_PORT = os.environ.get("DB_PORT")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_DATABASE = os.environ.get("DB_DATABASE")
+SLACK_BOT_LABELING_TOKEN = os.environ.get("SLACK_BOT_LABELING_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = "scrapy_crawler (+http://www.yourdomain.com)"
@@ -31,7 +34,7 @@ ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = "INFO"
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
@@ -58,21 +61,21 @@ COOKIES_ENABLED = False
 #    "scrapy_crawler.middlewares.ScrapyCrawlerSpiderMiddleware": 543,
 # }
 SPIDER_MIDDLEWARES = {
-    'scrapy.spidermiddlewares.referer.RefererMiddleware': None,
+    "scrapy.spidermiddlewares.referer.RefererMiddleware": None,
 }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'scrapeops_scrapy.middleware.retry.RetryMiddleware': 550,
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
+    "scrapeops_scrapy.middleware.retry.RetryMiddleware": 550,
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
 }
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
 EXTENSIONS = {
     "scrapy.extensions.telnet.TelnetConsole": None,
-    'scrapeops_scrapy.extension.ScrapeOpsMonitor': 500,
+    "scrapeops_scrapy.extension.ScrapeOpsMonitor": 500,
 }
 
 # Configure item pipelines

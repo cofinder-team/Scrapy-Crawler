@@ -41,6 +41,7 @@ class DBIpadItem(DBItem):
     generation = scrapy.Field()
     cellular = scrapy.Field()
 
+
 class JgArticle(scrapy.Item):
     id = scrapy.Field()
     price = scrapy.Field()

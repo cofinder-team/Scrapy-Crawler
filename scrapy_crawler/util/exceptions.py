@@ -16,19 +16,16 @@ class DropAndAlert(DropItem):
         self._set_classified(item)
 
     def _notify_message(self, item):
-        id = item['id'] if 'id' in item else 'NONE'
-        title = item['title'] if 'title' in item else 'NONE'
-        source = item['source'] if 'source' in item else 'NONE'
-        url = item['url'] if 'url' in item else 'NONE'
+        id = item["id"] if "id" in item else "NONE"
+        title = item["title"] if "title" in item else "NONE"
+        source = item["source"] if "source" in item else "NONE"
+        url = item["url"] if "url" in item else "NONE"
 
-        LabelingSlackBot().post_fail_message(
-            id, title, source, url, self.message
-        )
+        LabelingSlackBot().post_fail_message(id, title, source, url, self.message)
 
     def _set_classified(self, item):
         self.cursor.execute(
-            "UPDATE macguider.raw_used_item SET classified = TRUE WHERE id = %s", (item['id'],)
+            "UPDATE macguider.raw_used_item SET classified = TRUE WHERE id = %s",
+            (item["id"],),
         )
         self.db.commit()
-
-

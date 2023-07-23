@@ -20,10 +20,12 @@ class DBSoldOutSpider(scrapy.Spider):
         self.cur = self.conn.getCursor()
 
     def get_unsold_items(self):
-        self.cur.execute("SELECT * "
-                         "FROM macguider.deal "
-                         "WHERE sold = false "
-                         "ORDER BY last_crawled ")
+        self.cur.execute(
+            "SELECT * "
+            "FROM macguider.deal "
+            "WHERE sold = false "
+            "ORDER BY last_crawled "
+        )
         return self.cur.fetchall()
 
     def start_requests(self):
@@ -34,7 +36,9 @@ class DBSoldOutSpider(scrapy.Spider):
             url = row[7].split("/")[-1]
             yield scrapy.Request(
                 url=f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}",
-                callback=self.parse, meta={"item_id": id})
+                callback=self.parse,
+                meta={"item_id": id},
+            )
 
     def parse(self, response, **kwargs):
         # 글이 삭제된 경우

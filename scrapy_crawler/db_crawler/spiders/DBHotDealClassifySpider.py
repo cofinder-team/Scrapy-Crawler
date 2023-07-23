@@ -30,12 +30,14 @@ class DBHotDealClassifySpider(scrapy.Spider):
         self.cur = self.conn.getCursor()
 
     def get_unclassified_items(self):
-        self.cur.execute("SELECT * "
-                         "FROM macguider.raw_used_item "
-                         "WHERE classified = FALSE "
-                         "AND type is NULL AND item_id is NULL "
-                         "AND date >= '2023-07-14'"
-                         "ORDER BY date ")
+        self.cur.execute(
+            "SELECT * "
+            "FROM macguider.raw_used_item "
+            "WHERE classified = FALSE "
+            "AND type is NULL AND item_id is NULL "
+            "AND date >= '2023-07-14'"
+            "ORDER BY date "
+        )
         return self.cur.fetchall()
 
     def start_requests(self):
@@ -57,5 +59,5 @@ class DBHotDealClassifySpider(scrapy.Spider):
                 url=row[7],
                 img_url=row[8],
                 type=row[9],
-                item_id=row[10]
+                item_id=row[10],
             )

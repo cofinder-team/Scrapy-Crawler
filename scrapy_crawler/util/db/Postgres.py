@@ -8,11 +8,11 @@ from scrapy.utils import project
 class PostgresClient(object):
     def __init__(self):
         self.settings = project.get_project_settings()
-        self.host = self.settings.get('DB_HOST')
-        self.port = self.settings.get('DB_PORT')
-        self.user = self.settings.get('DB_USER')
-        self.password = self.settings.get('DB_PASSWORD')
-        self.database = self.settings.get('DB_DATABASE')
+        self.host = self.settings.get("DB_HOST")
+        self.port = self.settings.get("DB_PORT")
+        self.user = self.settings.get("DB_USER")
+        self.password = self.settings.get("DB_PASSWORD")
+        self.database = self.settings.get("DB_DATABASE")
         self._conn()
 
     def _conn(self):
@@ -23,7 +23,7 @@ class PostgresClient(object):
                     port=self.port,
                     user=self.user,
                     password=self.password,
-                    database=self.database
+                    database=self.database,
                 )
                 break
             except Exception as e:

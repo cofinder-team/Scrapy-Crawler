@@ -14,7 +14,6 @@ log_group_name = "scrapy-chatgpt"
 
 
 class CategoryClassifierPipeline:
-
     def __init__(self):
         self.chain = category_chain
         self.category_map = {
@@ -43,19 +42,23 @@ class CategoryClassifierPipeline:
                 DBItemClassifierPipeline.__name__,
                 DBExportPipeline.__name__,
                 SlackAlertPipeline.__name__,
-            ]
+            ],
         }
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
-        raw_result: str = self.chain.run(title=adapter["title"],
-                                         callbacks=[CloudWatchCallbackHandler(
-                                             log_group_name=log_group_name,
-                                             log_stream_name=adapter['id'],
-                                             function_name=type(self).__name__)]
-                                         ).upper()
+        raw_result: str = self.chain.run(
+            title=adapter["title"],
+            callbacks=[
+                CloudWatchCallbackHandler(
+                    log_group_name=log_group_name,
+                    log_stream_name=adapter["id"],
+                    function_name=type(self).__name__,
+                )
+            ],
+        ).upper()
 
         result: re.Match[bytes] | None = re.search(r"IPAD|MACBOOK|ETC", raw_result)
 
@@ -67,7 +70,11 @@ class CategoryClassifierPipeline:
             raise DropAndAlert(item, "Not MacBook or iPad")
 
         adapter["pipelines"] = self.pipeline_map[adapter["type"]]
-        return DBMacbookItem(**adapter) if adapter["type"] == "M" else DBIpadItem(**adapter)
+        return (
+            DBMacbookItem(**adapter)
+            if adapter["type"] == "M"
+            else DBIpadItem(**adapter)
+        )
 
 
 class MacbookModelClassifierPipeline:
@@ -88,13 +95,17 @@ class MacbookModelClassifierPipeline:
             return item
 
         try:
-            predict = self.macbook_chain.run(title=adapter["title"],
-                                             content=adapter["content"],
-                                             callbacks=[CloudWatchCallbackHandler(
-                                                 log_group_name=log_group_name,
-                                                 log_stream_name=adapter['id'],
-                                                 function_name=type(self).__name__)]
-                                             ).upper()
+            predict = self.macbook_chain.run(
+                title=adapter["title"],
+                content=adapter["content"],
+                callbacks=[
+                    CloudWatchCallbackHandler(
+                        log_group_name=log_group_name,
+                        log_stream_name=adapter["id"],
+                        function_name=type(self).__name__,
+                    )
+                ],
+            ).upper()
 
             model = re.search(r"AIR|PRO|MINI", predict).group()
             screen_size = int(re.findall("13|14|16", predict)[0])
@@ -117,17 +128,23 @@ class ChipClassifierPipeline:
 
     def __init__(self):
         self.chain_map = {
-            "AIR": dict({
-                13: macbook_air_13_chain,
-            }),
-            "PRO": dict({
-                13: macbook_pro_13_chain,
-                14: macbook_pro_14_chain,
-                16: macbook_pro_16_chain,
-            }),
-            "MINI": dict({
-                -1: macmini_chain,
-            })
+            "AIR": dict(
+                {
+                    13: macbook_air_13_chain,
+                }
+            ),
+            "PRO": dict(
+                {
+                    13: macbook_pro_13_chain,
+                    14: macbook_pro_14_chain,
+                    16: macbook_pro_16_chain,
+                }
+            ),
+            "MINI": dict(
+                {
+                    -1: macmini_chain,
+                }
+            ),
         }
 
     def process_item(self, item, spider):
@@ -139,13 +156,21 @@ class ChipClassifierPipeline:
 
         try:
             chain: LLMChain = self.chain_map[adapter["model"]][adapter["screen_size"]]
-            predict = chain.run(title=adapter["title"],
-                                content=adapter["content"],
-                                callbacks=[CloudWatchCallbackHandler(
-                                    log_group_name=log_group_name,
-                                    log_stream_name=adapter['id'],
-                                    function_name=type(self).__name__)]
-                                ).upper().replace(" ", "")
+            predict = (
+                chain.run(
+                    title=adapter["title"],
+                    content=adapter["content"],
+                    callbacks=[
+                        CloudWatchCallbackHandler(
+                            log_group_name=log_group_name,
+                            log_stream_name=adapter["id"],
+                            function_name=type(self).__name__,
+                        )
+                    ],
+                )
+                .upper()
+                .replace(" ", "")
+            )
 
             adapter["chip"] = re.findall(r"CHIP=(\w+)", predict)[0]
             adapter["cpu_core"] = int(re.findall(r"CPU_CORE=(\d+)", predict)[0])
@@ -184,18 +209,26 @@ class MacbookRamSSDClassifierPipeline:
             default_ssd = 1024
 
         try:
-            predict = self.macbook_chain.run(title=title,
-                                             content=content,
-                                             default_ram=default_ram,
-                                             default_ssd=default_ssd,
-                                             callbacks=[CloudWatchCallbackHandler(
-                                                 log_group_name=log_group_name,
-                                                 log_stream_name=adapter['id'],
-                                                 function_name=type(self).__name__)]
-                                             ).upper().replace(" ", "")
+            predict = (
+                self.macbook_chain.run(
+                    title=title,
+                    content=content,
+                    default_ram=default_ram,
+                    default_ssd=default_ssd,
+                    callbacks=[
+                        CloudWatchCallbackHandler(
+                            log_group_name=log_group_name,
+                            log_stream_name=adapter["id"],
+                            function_name=type(self).__name__,
+                        )
+                    ],
+                )
+                .upper()
+                .replace(" ", "")
+            )
 
-            adapter["ram"] = re.findall(r'RAM=(\d+)GB', predict)[0]
-            adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
+            adapter["ram"] = re.findall(r"RAM=(\d+)GB", predict)[0]
+            adapter["ssd"] = re.findall(r"SSD=(\S+)", predict)[0]
             if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
                 adapter["ssd"] = "1TB"
 
@@ -222,17 +255,27 @@ class IpadModelClassifierPipeline:
         if type(self).__name__ not in adapter["pipelines"]:
             return item
 
-        predict = self.ipad_chain.run(title=adapter["title"],
-                                      content=adapter["content"],
-                                      callbacks=[CloudWatchCallbackHandler(
-                                          log_group_name=log_group_name,
-                                          log_stream_name=adapter['id'],
-                                          function_name=type(self).__name__)]
-                                      ).upper().replace(" ", "")
+        predict = (
+            self.ipad_chain.run(
+                title=adapter["title"],
+                content=adapter["content"],
+                callbacks=[
+                    CloudWatchCallbackHandler(
+                        log_group_name=log_group_name,
+                        log_stream_name=adapter["id"],
+                        function_name=type(self).__name__,
+                    )
+                ],
+            )
+            .upper()
+            .replace(" ", "")
+        )
 
         try:
             model = re.search(r"IPADPRO|IPADMINI|IPADAIR|IPAD", predict).group()
-            screen_size = float(re.search(r"8.3|10.2|10.9|10|11|12.9|12", predict).group())
+            screen_size = float(
+                re.search(r"8.3|10.2|10.9|10|11|12.9|12", predict).group()
+            )
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}, {predict}")
 
@@ -252,19 +295,27 @@ class IpadGenerationClassifierPipeline:
     def __init__(self):
         self.gen_chain: LLMChain = ipad_gen_chain
         self.generation_map = {
-            "IPADPRO": dict({
-                11: [2, 3, 4],
-                12.9: [4, 5, 6],
-            }),
-            "IPADAIR": dict({
-                10.9: [4, 5],
-            }),
-            "IPAD": dict({
-                12.9: [8, 9, 10],
-            }),
-            "IPADMINI": dict({
-                8.3: [6],
-            })
+            "IPADPRO": dict(
+                {
+                    11: [2, 3, 4],
+                    12.9: [4, 5, 6],
+                }
+            ),
+            "IPADAIR": dict(
+                {
+                    10.9: [4, 5],
+                }
+            ),
+            "IPAD": dict(
+                {
+                    12.9: [8, 9, 10],
+                }
+            ),
+            "IPADMINI": dict(
+                {
+                    8.3: [6],
+                }
+            ),
         }
 
     def process_item(self, item, spider):
@@ -275,19 +326,28 @@ class IpadGenerationClassifierPipeline:
             return item
 
         try:
-            predict = self.gen_chain.run(title=adapter["title"],
-                                         content=adapter["content"],
-                                         callbacks=[CloudWatchCallbackHandler(
-                                             log_group_name=log_group_name,
-                                             log_stream_name=adapter['id'],
-                                             function_name=type(self).__name__)]
-                                         ).upper()
+            predict = self.gen_chain.run(
+                title=adapter["title"],
+                content=adapter["content"],
+                callbacks=[
+                    CloudWatchCallbackHandler(
+                        log_group_name=log_group_name,
+                        log_stream_name=adapter["id"],
+                        function_name=type(self).__name__,
+                    )
+                ],
+            ).upper()
 
             generation = int(re.search(r"GENERATION=(\d+)", predict).group(1))
-            if generation in self.generation_map[adapter["model"]][adapter["screen_size"]]:
+            if (
+                generation
+                in self.generation_map[adapter["model"]][adapter["screen_size"]]
+            ):
                 adapter["generation"] = generation
             else:
-                raise DropAndAlert(item, f"[{self.name}]Unknown generation : {generation}")
+                raise DropAndAlert(
+                    item, f"[{self.name}]Unknown generation : {generation}"
+                )
 
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
@@ -301,26 +361,33 @@ class IpadStorageClassifierPipeline:
     def __init__(self):
         self.ipad_chain = ipad_system_chain
         self.storage_map = {
-            "IPADAIR": dict({
-                4: 64,
-                5: 64,
-            }),
-            "IPAD": dict({
-                8: 32,
-                9: 64,
-                10: 64,
-            }),
-            "IPADPRO": dict({
-                2: 128,
-                3: 128,
-                4: 128,
-                5: 128,
-                6: 128,
-            }),
-            "IPADMINI": dict({
-                6: 64,
-            })
-
+            "IPADAIR": dict(
+                {
+                    4: 64,
+                    5: 64,
+                }
+            ),
+            "IPAD": dict(
+                {
+                    8: 32,
+                    9: 64,
+                    10: 64,
+                }
+            ),
+            "IPADPRO": dict(
+                {
+                    2: 128,
+                    3: 128,
+                    4: 128,
+                    5: 128,
+                    6: 128,
+                }
+            ),
+            "IPADMINI": dict(
+                {
+                    6: 64,
+                }
+            ),
         }
 
     def process_item(self, item, spider):
@@ -336,16 +403,24 @@ class IpadStorageClassifierPipeline:
         default_storage = self.storage_map[adapter["model"]][generation]
 
         try:
-            predict = self.ipad_chain.run(title=title,
-                                          content=content,
-                                          default_ssd=default_storage,
-                                          callbacks=[CloudWatchCallbackHandler(
-                                              log_group_name=log_group_name,
-                                              log_stream_name=adapter['id'],
-                                              function_name=type(self).__name__)]
-                                          ).upper().replace(" ", "")
+            predict = (
+                self.ipad_chain.run(
+                    title=title,
+                    content=content,
+                    default_ssd=default_storage,
+                    callbacks=[
+                        CloudWatchCallbackHandler(
+                            log_group_name=log_group_name,
+                            log_stream_name=adapter["id"],
+                            function_name=type(self).__name__,
+                        )
+                    ],
+                )
+                .upper()
+                .replace(" ", "")
+            )
 
-            adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
+            adapter["ssd"] = re.findall(r"SSD=(\S+)", predict)[0]
 
             if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
                 adapter["ssd"] = "1TB"
@@ -372,21 +447,25 @@ class IpadCellularClassifierPipeline:
         title = adapter["title"].upper()
         content = adapter["content"].upper()
 
-        regex = re.compile(r'셀룰|LTE|Cellular|')
+        regex = re.compile(r"셀룰|LTE|Cellular|")
 
         if regex.search(title + content) is None:
             adapter["cellular"] = False
         else:
             try:
-                predict = self.ipad_cellular_chain.run(title=title,
-                                                       content=content,
-                                                       callbacks=[CloudWatchCallbackHandler(
-                                                           log_group_name=log_group_name,
-                                                           log_stream_name=adapter['id'],
-                                                           function_name=type(self).__name__)]
-                                                       ).upper()
+                predict = self.ipad_cellular_chain.run(
+                    title=title,
+                    content=content,
+                    callbacks=[
+                        CloudWatchCallbackHandler(
+                            log_group_name=log_group_name,
+                            log_stream_name=adapter["id"],
+                            function_name=type(self).__name__,
+                        )
+                    ],
+                ).upper()
 
-                adapter["cellular"] = re.findall(r'(\w+)', predict)[0] == "TRUE"
+                adapter["cellular"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
             except Exception as e:
                 adapter["cellular"] = False
 
@@ -407,7 +486,7 @@ class UnusedClassifierPipeline:
         title = adapter["title"]
         content = adapter["content"]
 
-        regex = re.compile(r'미개봉')
+        regex = re.compile(r"미개봉")
         adapter["unused"] = regex.search(title + content) is not None
         return item
 
@@ -426,19 +505,23 @@ class AppleCarePlusClassifierPipeline:
         title = adapter["title"]
         content = adapter["content"]
 
-        regex = re.compile(r'애플케어플러스|애케플|애캐플|케어|캐어|CARE')
+        regex = re.compile(r"애플케어플러스|애케플|애캐플|케어|캐어|CARE")
 
         if regex.search(title + content) is not None:
             try:
-                predict = self.apple_care_plus_chain.run(title=title,
-                                                         content=content,
-                                                         callbacks=[CloudWatchCallbackHandler(
-                                                             log_group_name=log_group_name,
-                                                             log_stream_name=adapter['id'],
-                                                             function_name=type(self).__name__)]
-                                                         ).upper()
+                predict = self.apple_care_plus_chain.run(
+                    title=title,
+                    content=content,
+                    callbacks=[
+                        CloudWatchCallbackHandler(
+                            log_group_name=log_group_name,
+                            log_stream_name=adapter["id"],
+                            function_name=type(self).__name__,
+                        )
+                    ],
+                ).upper()
 
-                adapter["apple_care_plus"] = re.findall(r'(\w+)', predict)[0] == "TRUE"
+                adapter["apple_care_plus"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
             except Exception as e:
                 adapter["apple_care_plus"] = False
                 return
@@ -453,39 +536,51 @@ class DBItemClassifierPipeline:
         self.db = PostgresClient()
         self.cursor = self.db.getCursor()
         self.model_id_map = {
-            "M": dict({
-                "MINI": dict({
-                    -1: 1
-                }),
-                "AIR": dict({
-                    13: 2,
-                }),
-                "PRO": dict({
-                    13: 3,
-                    14: 4,
-                    16: 5,
-                })
-            }),
-            "P": dict({
-                "IPADMINI": dict({
-                    8.3: 6
-                }),
-                "IPADAIR": dict({
-                    10.9: 7,
-                }),
-                "IPAD": dict({
-                    12.9: 8,
-                }),
-                "IPADPRO": dict({
-                    11: 9,
-                    12.9: 10,
-                })
-            })
+            "M": dict(
+                {
+                    "MINI": dict({-1: 1}),
+                    "AIR": dict(
+                        {
+                            13: 2,
+                        }
+                    ),
+                    "PRO": dict(
+                        {
+                            13: 3,
+                            14: 4,
+                            16: 5,
+                        }
+                    ),
+                }
+            ),
+            "P": dict(
+                {
+                    "IPADMINI": dict({8.3: 6}),
+                    "IPADAIR": dict(
+                        {
+                            10.9: 7,
+                        }
+                    ),
+                    "IPAD": dict(
+                        {
+                            12.9: 8,
+                        }
+                    ),
+                    "IPADPRO": dict(
+                        {
+                            11: 9,
+                            12.9: 10,
+                        }
+                    ),
+                }
+            ),
         }
 
     def classify_item_id(self, item: ItemAdapter) -> int:
         try:
-            model_id = self.model_id_map[item["type"]][item["model"]][item["screen_size"]]
+            model_id = self.model_id_map[item["type"]][item["model"]][
+                item["screen_size"]
+            ]
 
             if item["type"] == "M":
                 if item["chip"] == "M1PRO":
@@ -503,20 +598,22 @@ class DBItemClassifierPipeline:
                     f"WHERE model = {model_id} "
                     f"AND chip = '{item['chip']}' "
                     f"AND cpu = {item['cpu_core']} AND gpu = {item['gpu_core']} "
-                    f"AND ssd = \'{item['ssd']}\' AND ram = {item['ram']} ")
+                    f"AND ssd = '{item['ssd']}' AND ram = {item['ram']} "
+                )
 
                 item_id = self.cursor.fetchone()[0]
 
                 if item_id is None:
                     logging.error(
-                        f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}")
+                        f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}"
+                    )
             else:
                 self.cursor.execute(
                     f"SELECT id "
                     f"FROM macguider.item_ipad "
                     f"WHERE model = {model_id} "
                     f"AND gen = {item['generation']} "
-                    f"AND storage = \'{item['ssd']}\' "
+                    f"AND storage = '{item['ssd']}' "
                     f"AND cellular = {item['cellular']} "
                 )
 
@@ -524,7 +621,8 @@ class DBItemClassifierPipeline:
 
                 if item_id is None:
                     logging.error(
-                        f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}")
+                        f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}"
+                    )
             return item_id
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
@@ -583,9 +681,9 @@ class HotDealClassifierPipeline:
         self.cache = {}
 
     def get_model_price(self, item: ItemAdapter):
-        if (item['type'], item['item_id'], item['unused']) in self.cache:
+        if (item["type"], item["item_id"], item["unused"]) in self.cache:
             logging.info(f"[{self.name}] cache hit")
-            return self.cache[(item['type'], item['item_id'], item['unused'])]
+            return self.cache[(item["type"], item["item_id"], item["unused"])]
 
         price_url = f"https://dev-api.macguider.io/price/deal/{item['type']}/{item['item_id']}?unused={'true' if item['unused'] else 'false'}"
 
@@ -593,8 +691,8 @@ class HotDealClassifierPipeline:
             response = requests.get(price_url)
             response.raise_for_status()
             resp = response.json()
-            average = resp['price_80']
-            self.cache[(item['type'], item['item_id'], item['unused'])] = average
+            average = resp["price_80"]
+            self.cache[(item["type"], item["item_id"], item["unused"])] = average
             return average if average is not None else 0
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
@@ -606,7 +704,9 @@ class HotDealClassifierPipeline:
         average = self.get_model_price(adapter)
 
         if adapter["price"] > average:
-            raise DropAndAlert(item, f"price is too high: {adapter['price']} > {average}")
+            raise DropAndAlert(
+                item, f"price is too high: {adapter['price']} > {average}"
+            )
 
         return item
 
