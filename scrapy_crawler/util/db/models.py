@@ -27,7 +27,7 @@ class RawUsedItem(Base):
 class Item(Base):
     __tablename__ = "item"
     id = Column(Integer, primary_key=True)
-    type = Column("type", Boolean, primary_key=True)
+    type = Column("type", String, primary_key=True)
 
 
 class Model(Base):

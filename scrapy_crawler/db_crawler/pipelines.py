@@ -612,18 +612,23 @@ class DBItemClassifierPipeline:
                 elif item["chip"] == "M2MAX":
                     item["chip"] = "M2Max"
 
-                item_id = (
-                    self.session.query(ItemMacbook)
-                    .filter(
-                        ItemMacbook.model == model_id,
-                        ItemMacbook.chip == item["chip"],
-                        ItemMacbook.cpu == item["cpu_core"],
-                        ItemMacbook.gpu == item["gpu_core"],
-                        ItemMacbook.ssd == item["ssd"],
-                        ItemMacbook.ram == item["ram"],
+                try:
+                    item_id = (
+                        self.session.query(ItemMacbook)
+                        .filter(
+                            ItemMacbook.model == model_id,
+                            ItemMacbook.chip == item["chip"],
+                            ItemMacbook.cpu == item["cpu_core"],
+                            ItemMacbook.gpu == item["gpu_core"],
+                            ItemMacbook.ssd == item["ssd"],
+                            ItemMacbook.ram == item["ram"],
+                        )
+                        .first()
                     )
-                    .first()
-                )
+
+                except Exception as e:
+                    self.session.rollback()
+                    raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
                 if item_id is None:
                     logging.error(
@@ -631,17 +636,22 @@ class DBItemClassifierPipeline:
                         f"model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}"
                         f",ssd : {item['ssd']}, ram : {item['ram']}"
                     )
+
             else:
-                item_id = (
-                    self.session.query(ItemIpad)
-                    .filter(
-                        ItemIpad.model == model_id,
-                        ItemIpad.generation == item["generation"],
-                        ItemIpad.ssd == item["ssd"],
-                        ItemIpad.cellular == item["cellular"],
+                try:
+                    item_id = (
+                        self.session.query(ItemIpad)
+                        .filter(
+                            ItemIpad.model == model_id,
+                            ItemIpad.generation == item["generation"],
+                            ItemIpad.ssd == item["ssd"],
+                            ItemIpad.cellular == item["cellular"],
+                        )
+                        .first()
                     )
-                    .first()
-                )
+                except Exception as e:
+                    self.session.rollback()
+                    raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
                 if item_id is None:
                     logging.error(
