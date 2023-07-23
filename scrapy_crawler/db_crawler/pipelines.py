@@ -1,14 +1,35 @@
-from itemadapter import ItemAdapter
-import re
 import logging
+import re
+from datetime import datetime
+
 import requests
+from itemadapter import ItemAdapter
+from langchain import LLMChain
 from scrapy.exceptions import DropItem
-from scrapy_crawler.db_crawler.items import DBMacbookItem, DBIpadItem
-from scrapy_crawler.util.db.Postgres import PostgresClient
+from sqlalchemy.orm import sessionmaker
+
+from scrapy_crawler.db_crawler.items import DBIpadItem, DBMacbookItem
+from scrapy_crawler.util.chatgpt.CallBacks import CloudWatchCallbackHandler
+from scrapy_crawler.util.chatgpt.chains import (
+    apple_care_plus_chain,
+    category_chain,
+    ipad_cellular_chain,
+    ipad_chain,
+    ipad_gen_chain,
+    ipad_system_chain,
+    macbook_air_13_chain,
+    macbook_chain,
+    macbook_pro_13_chain,
+    macbook_pro_14_chain,
+    macbook_pro_16_chain,
+    macbook_system_chain,
+    macmini_chain,
+    unused_chain,
+)
+from scrapy_crawler.util.db.models import Deal, ItemIpad, ItemMacbook, RawUsedItem
+from scrapy_crawler.util.db.settings import get_engine
 from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
-from scrapy_crawler.util.chatgpt.chains import *
-from scrapy_crawler.util.chatgpt.CallBacks import CloudWatchCallbackHandler
 
 log_group_name = "scrapy-chatgpt"
 
@@ -66,8 +87,8 @@ class CategoryClassifierPipeline:
             category = result.group().upper()
             adapter["type"] = self.category_map[category]
 
-        except IndexError or KeyError:
-            raise DropAndAlert(item, "Not MacBook or iPad")
+        except Exception as e:
+            raise DropAndAlert(item, f"Not MacBook or iPad: {e}")
 
         adapter["pipelines"] = self.pipeline_map[adapter["type"]]
         return (
@@ -466,7 +487,7 @@ class IpadCellularClassifierPipeline:
                 ).upper()
 
                 adapter["cellular"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
-            except Exception as e:
+            except Exception:
                 adapter["cellular"] = False
 
         return item
@@ -522,7 +543,7 @@ class AppleCarePlusClassifierPipeline:
                 ).upper()
 
                 adapter["apple_care_plus"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
-            except Exception as e:
+            except Exception:
                 adapter["apple_care_plus"] = False
                 return
 
@@ -533,8 +554,7 @@ class DBItemClassifierPipeline:
     name = "DBItemClassifierPipeline"
 
     def __init__(self):
-        self.db = PostgresClient()
-        self.cursor = self.db.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
         self.model_id_map = {
             "M": dict(
                 {
@@ -592,38 +612,46 @@ class DBItemClassifierPipeline:
                 elif item["chip"] == "M2MAX":
                     item["chip"] = "M2Max"
 
-                self.cursor.execute(
-                    f"SELECT id "
-                    f"FROM macguider.item_macbook "
-                    f"WHERE model = {model_id} "
-                    f"AND chip = '{item['chip']}' "
-                    f"AND cpu = {item['cpu_core']} AND gpu = {item['gpu_core']} "
-                    f"AND ssd = '{item['ssd']}' AND ram = {item['ram']} "
+                item_id = (
+                    self.session.query(ItemMacbook)
+                    .filter(
+                        ItemMacbook.model == model_id,
+                        ItemMacbook.chip == item["chip"],
+                        ItemMacbook.cpu == item["cpu_core"],
+                        ItemMacbook.gpu == item["gpu_core"],
+                        ItemMacbook.ssd == item["ssd"],
+                        ItemMacbook.ram == item["ram"],
+                    )
+                    .first()
                 )
-
-                item_id = self.cursor.fetchone()[0]
 
                 if item_id is None:
                     logging.error(
-                        f"[{self.name}] item_id is None, model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}, ssd : {item['ssd']}, ram : {item['ram']}"
+                        f"[{self.name}] item_id is None,"
+                        f"model : {model_id}, chip : {item['chip']}, cpu : {item['cpu_core']}, gpu : {item['gpu_core']}"
+                        f",ssd : {item['ssd']}, ram : {item['ram']}"
                     )
             else:
-                self.cursor.execute(
-                    f"SELECT id "
-                    f"FROM macguider.item_ipad "
-                    f"WHERE model = {model_id} "
-                    f"AND gen = {item['generation']} "
-                    f"AND storage = '{item['ssd']}' "
-                    f"AND cellular = {item['cellular']} "
+                item_id = (
+                    self.session.query(ItemIpad)
+                    .filter(
+                        ItemIpad.model == model_id,
+                        ItemIpad.gen == item["generation"],
+                        ItemIpad.storage == item["ssd"],
+                        ItemIpad.cellular == item["cellular"],
+                    )
+                    .first()
                 )
-
-                item_id = self.cursor.fetchone()[0]
 
                 if item_id is None:
                     logging.error(
-                        f"[{self.name}] item_id is None, model : {model_id}, gen : {item['generation']}, storage : {item['storage']}, cellular : {item['cellular']}"
+                        f"[{self.name}] item_id is None, "
+                        f"model : {model_id}, gen : {item['generation']}, "
+                        f"storage : {item['storage']}, cellular : {item['cellular']}"
                     )
-            return item_id
+
+            return item_id.id
+
         except Exception as e:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
@@ -647,8 +675,7 @@ class DBExportPipeline:
     name = "DBExportPipeline"
 
     def __init__(self):
-        self.db = PostgresClient()
-        self.cursor = self.db.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
@@ -660,15 +687,18 @@ class DBExportPipeline:
             item_id = adapter["item_id"]
             item_type = adapter["type"]
 
-            self.cursor.execute(
-                f"UPDATE macguider.raw_used_item "
-                f"SET item_id = {item_id}, type = '{item_type}', unused = {adapter['unused']} "
-                f"WHERE id = {adapter['id']} "
+            self.session.query(RawUsedItem).filter(
+                RawUsedItem.id == adapter["id"]
+            ).update(
+                {
+                    RawUsedItem.item_id: item_id,
+                    RawUsedItem.type: item_type,
+                    RawUsedItem.unused: adapter["unused"],
+                }
             )
-
-            self.db.commit()
+            self.session.commit()
         except Exception as e:
-            self.db.rollback()
+            self.session.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
@@ -685,10 +715,13 @@ class HotDealClassifierPipeline:
             logging.info(f"[{self.name}] cache hit")
             return self.cache[(item["type"], item["item_id"], item["unused"])]
 
-        price_url = f"https://dev-api.macguider.io/price/deal/{item['type']}/{item['item_id']}?unused={'true' if item['unused'] else 'false'}"
+        price_url = (
+            f"https://dev-api.macguider.io/price/deal/"
+            f"{item['type']}/{item['item_id']}?unused={'true' if item['unused'] else 'false'}"
+        )
 
         try:
-            response = requests.get(price_url)
+            response = requests.get(price_url, timeout=10)
             response.raise_for_status()
             resp = response.json()
             average = resp["price_80"]
@@ -715,20 +748,16 @@ class SoldOutClassifierPipeline:
     name = "SoldOutClassifierPipeline"
 
     def __init__(self):
-        self.db = PostgresClient()
-        self.cursor = self.db.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
     def set_sold_out(self, item: ItemAdapter):
         try:
-            self.cursor.execute(
-                f"UPDATE macguider.deal "
-                f"SET sold = true "
-                f"WHERE id = {item['id']} "
+            self.session.query(Deal).filter(Deal.id == item["id"]).update(
+                {Deal.sold: True}
             )
-
-            self.db.commit()
+            self.session.commit()
         except Exception as e:
-            self.db.rollback()
+            self.session.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
     def process_item(self, item, spider):
@@ -747,23 +776,19 @@ class DBUpdateLastCrawledPipeline:
     name = "DBUpdateLastCrawledPipeline"
 
     def __init__(self):
-        self.database = PostgresClient()
-        self.cursor = self.database.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
         try:
-            self.cursor.execute(
-                f"UPDATE macguider.deal "
-                f"SET last_crawled = NOW() "
-                f"WHERE id = {adapter['id']} "
+            self.session.query(Deal).filter(Deal.id == adapter["id"]).update(
+                {Deal.last_crawled: datetime.utcnow()}
             )
-
-            self.database.commit()
+            self.session.commit()
         except Exception as e:
-            self.database.rollback()
+            self.session.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Scrapy settings for scrapy_crawler project
 #
 # For simplicity, this file contains only settings considered important or
@@ -34,7 +33,7 @@ ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # CONCURRENT_REQUESTS = 32
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "WARNING"
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
