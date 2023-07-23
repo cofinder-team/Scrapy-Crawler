@@ -1,23 +1,26 @@
-import scrapy
-import json
 import datetime
 import html
-from scrapy_crawler.web_crawler.items import JgArticle
+import json
 from urllib import parse
+
+import scrapy
+
+from scrapy_crawler.web_crawler.items import JgArticle
 
 
 class JgKeywordCrawler(scrapy.Spider):
     name = "JgKeywordCrawler"
     custom_settings = {
         "ITEM_PIPELINES": {
-            "scrapy_crawler.web_crawler.pipelines.DuplicateFilterPipeline": 100,
-            "scrapy_crawler.web_crawler.pipelines.ContentScraperPipeline": 200,
-            "scrapy_crawler.web_crawler.pipelines.PostgresPipeline": 300,
+            "scrapy_crawler.web_crawler.pipelines.DuplicateFilterPipeline": 1,
+            "scrapy_crawler.web_crawler.pipelines.ContentScraperPipeline": 2,
+            "scrapy_crawler.web_crawler.pipelines.ManualFilterPipeline": 2,
+            "scrapy_crawler.web_crawler.pipelines.PostgresPipeline": 4,
         }
     }
 
     def __init__(self, keyword=None, *args, **kwargs):
-        super(JgKeywordCrawler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.keyword = keyword
 
     def start_requests(self):
@@ -76,4 +79,5 @@ class JgKeywordCrawler(scrapy.Spider):
             content=content,
             price=price,
             img_url=img_url,
+            source="중고나라",
         )
