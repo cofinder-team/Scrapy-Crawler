@@ -56,6 +56,31 @@ class ContentScraperPipeline:
         return item
 
 
+class ManualFilterPipeline:
+    name = "ManualFilterPipeline"
+
+    def __init__(self):
+        self.forbidden_words = [
+            "매입", "삽니다", "교환", "파트너"
+        ]
+        self.price_threshold = 200000
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+
+        title = adapter["title"]
+        price = adapter["price"]
+        content = adapter["content"]
+
+        if self.forbidden_words in title or self.forbidden_words in content:
+            raise DropItem("Forbidden word found: %s" % item)
+
+        if price <= self.price_threshold:
+            raise DropItem("Price is too low: %s" % item)
+
+        return item
+
+
 class PostgresPipeline:
     name = "postgres_pipeline"
 
