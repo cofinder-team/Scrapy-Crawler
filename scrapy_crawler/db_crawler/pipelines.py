@@ -642,8 +642,10 @@ class SoldOutClassifierPipeline:
         item["type"] = "SOLD_OUT"
         return item
 
+
 class DBUpdateLastCrawledPipeline:
     name = "DBUpdateLastCrawledPipeline"
+
     def __init__(self):
         self.database = PostgresClient()
         self.cursor = self.database.getCursor()
@@ -665,6 +667,7 @@ class DBUpdateLastCrawledPipeline:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         return item
+
 
 class SlackAlertPipeline:
     def __init__(self):
