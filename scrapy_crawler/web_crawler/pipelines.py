@@ -14,19 +14,27 @@ class DuplicateFilterPipeline:
     name = "DuplicateFilterPipeline"
 
     def __init__(self):
-        self.Session = sessionmaker(bind=get_engine())
-        self.session = self.Session()
+        self.session = sessionmaker(bind=get_engine())()
 
     def is_duplicated(self, adapter: ItemAdapter) -> bool:
-        item = (
-            self.session.query(RawUsedItem)
-            .filter(RawUsedItem.url == adapter["url"])
-            .filter(
-                RawUsedItem.writer == adapter["writer"]
-                and RawUsedItem.title == adapter["title"]
+        item = None
+        source = adapter["source"]
+
+        if source == "중고나라":
+            item = (
+                self.session.query(RawUsedItem)
+                .filter(RawUsedItem.url == adapter["url"])
+                .first()
             )
-            .first()
-        )
+        elif source == "번개장터":
+            item = (
+                self.session.query(RawUsedItem)
+                .filter(
+                    RawUsedItem.url
+                    == f"https://api.bunjang.co.kr/api/pms/v2/products-detail/{adapter['pid']}?viewerUid=-1"
+                )
+                .first()
+            )
 
         return item is not None
 
@@ -73,17 +81,29 @@ class ManualFilterPipeline:
     name = "ManualFilterPipeline"
 
     def __init__(self):
-        self.forbidden_words = ["매입", "삽니다", "교환", "파트너"]
+        self.forbidden_words = ["매입", "삽니다", "파트너"]
         self.price_threshold = 200000
+
+    def has_forbidden_word(self, title: str, content: str) -> bool:
+        return any(word in title for word in self.forbidden_words) or any(
+            word in content for word in self.forbidden_words
+        )
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
+        source = adapter["source"]
+        title: str = ""
+        content: str = ""
 
-        title = adapter["title"]
+        if source == "번개장터":
+            title = adapter["name"]
+            content = adapter["description"]
+        elif source == "중고나라":
+            title = adapter["title"]
+            content = adapter["content"]
         price = adapter["price"]
-        content = adapter["content"]
 
-        if self.forbidden_words in title or self.forbidden_words in content:
+        if self.has_forbidden_word(title, content):
             raise DropItem("Forbidden word found: %s" % item)
 
         if price <= self.price_threshold:
@@ -100,18 +120,37 @@ class PostgresPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
+        source = adapter["source"]
+        url, img_url, price, date, writer, title, content = "", "", "", "", "", "", ""
+
+        if source == "번개장터":
+            url = f"https://api.bunjang.co.kr/api/pms/v2/products-detail/{adapter['pid']}?viewerUid=-1"
+            img_url = adapter["imageUrl"]
+            price = adapter["price"]
+            date = adapter["updatedAt"]
+            writer = adapter["writer"]
+            title = adapter["name"]
+            content = adapter["description"]
+        elif source == "중고나라":
+            url = adapter["url"]
+            img_url = adapter["img_url"]
+            price = adapter["price"]
+            date = adapter["date"]
+            writer = adapter["writer"]
+            title = adapter["title"]
+            content = adapter["content"]
 
         try:
             self.session.add(
                 RawUsedItem(
-                    url=adapter["url"],
-                    img_url=adapter["img_url"],
-                    price=adapter["price"],
-                    date=adapter["date"],
-                    writer=adapter["writer"],
-                    title=adapter["title"],
-                    content=adapter["content"],
-                    source="중고나라",
+                    url=url,
+                    img_url=img_url,
+                    price=price,
+                    date=date,
+                    writer=writer,
+                    title=title,
+                    content=content,
+                    source=source,
                 )
             )
             self.session.commit()
