@@ -2,14 +2,15 @@ from itemadapter import ItemAdapter
 import re
 import logging
 import requests
-import json
 from scrapy.exceptions import DropItem
-
 from scrapy_crawler.db_crawler.items import DBMacbookItem, DBIpadItem
 from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.util.chatgpt.chains import *
+from scrapy_crawler.util.chatgpt.CallBacks import CloudWatchCallbackHandler
+
+log_group_name = "scrapy-chatgpt"
 
 
 class CategoryClassifierPipeline:
@@ -49,7 +50,13 @@ class CategoryClassifierPipeline:
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
 
-        raw_result: str = self.chain.run(title=adapter["title"]).upper()
+        raw_result: str = self.chain.run(title=adapter["title"],
+                                         callbacks=[CloudWatchCallbackHandler(
+                                             log_group_name=log_group_name,
+                                             log_stream_name=adapter['id'],
+                                             function_name=type(self).__name__)]
+                                         ).upper()
+
         result: re.Match[bytes] | None = re.search(r"IPAD|MACBOOK|ETC", raw_result)
 
         try:
@@ -81,7 +88,14 @@ class MacbookModelClassifierPipeline:
             return item
 
         try:
-            predict = self.macbook_chain.run(title=adapter["title"], content=adapter["content"]).upper()
+            predict = self.macbook_chain.run(title=adapter["title"],
+                                             content=adapter["content"],
+                                             callbacks=[CloudWatchCallbackHandler(
+                                                 log_group_name=log_group_name,
+                                                 log_stream_name=adapter['id'],
+                                                 function_name=type(self).__name__)]
+                                             ).upper()
+
             model = re.search(r"AIR|PRO|MINI", predict).group()
             screen_size = int(re.findall("13|14|16", predict)[0])
         except IndexError:
@@ -125,7 +139,14 @@ class ChipClassifierPipeline:
 
         try:
             chain: LLMChain = self.chain_map[adapter["model"]][adapter["screen_size"]]
-            predict = chain.run(title=adapter["title"], content=adapter["content"]).upper().replace(" ", "")
+            predict = chain.run(title=adapter["title"],
+                                content=adapter["content"],
+                                callbacks=[CloudWatchCallbackHandler(
+                                    log_group_name=log_group_name,
+                                    log_stream_name=adapter['id'],
+                                    function_name=type(self).__name__)]
+                                ).upper().replace(" ", "")
+
             adapter["chip"] = re.findall(r"CHIP=(\w+)", predict)[0]
             adapter["cpu_core"] = int(re.findall(r"CPU_CORE=(\d+)", predict)[0])
             adapter["gpu_core"] = int(re.findall(r"GPU_CORE=(\d+)", predict)[0])
@@ -163,8 +184,15 @@ class MacbookRamSSDClassifierPipeline:
             default_ssd = 1024
 
         try:
-            predict = self.macbook_chain.run(title=title, content=content, default_ram=default_ram,
-                                             default_ssd=default_ssd).upper().replace(" ", "")
+            predict = self.macbook_chain.run(title=title,
+                                             content=content,
+                                             default_ram=default_ram,
+                                             default_ssd=default_ssd,
+                                             callbacks=[CloudWatchCallbackHandler(
+                                                 log_group_name=log_group_name,
+                                                 log_stream_name=adapter['id'],
+                                                 function_name=type(self).__name__)]
+                                             ).upper().replace(" ", "")
 
             adapter["ram"] = re.findall(r'RAM=(\d+)GB', predict)[0]
             adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
@@ -194,7 +222,14 @@ class IpadModelClassifierPipeline:
         if type(self).__name__ not in adapter["pipelines"]:
             return item
 
-        predict = self.ipad_chain.run(title=adapter["title"], content=adapter["content"]).upper().replace(" ", "")
+        predict = self.ipad_chain.run(title=adapter["title"],
+                                      content=adapter["content"],
+                                      callbacks=[CloudWatchCallbackHandler(
+                                          log_group_name=log_group_name,
+                                          log_stream_name=adapter['id'],
+                                          function_name=type(self).__name__)]
+                                      ).upper().replace(" ", "")
+
         try:
             model = re.search(r"IPADPRO|IPADMINI|IPADAIR|IPAD", predict).group()
             screen_size = float(re.search(r"8.3|10.2|10.9|10|11|12.9|12", predict).group())
@@ -240,7 +275,14 @@ class IpadGenerationClassifierPipeline:
             return item
 
         try:
-            predict = self.gen_chain.run(title=adapter["title"], content=adapter["content"]).upper()
+            predict = self.gen_chain.run(title=adapter["title"],
+                                         content=adapter["content"],
+                                         callbacks=[CloudWatchCallbackHandler(
+                                             log_group_name=log_group_name,
+                                             log_stream_name=adapter['id'],
+                                             function_name=type(self).__name__)]
+                                         ).upper()
+
             generation = int(re.search(r"GENERATION=(\d+)", predict).group(1))
             if generation in self.generation_map[adapter["model"]][adapter["screen_size"]]:
                 adapter["generation"] = generation
@@ -294,8 +336,15 @@ class IpadStorageClassifierPipeline:
         default_storage = self.storage_map[adapter["model"]][generation]
 
         try:
-            predict = self.ipad_chain.run(title=title, content=content, default_ssd=default_storage).upper().replace(
-                " ", "")
+            predict = self.ipad_chain.run(title=title,
+                                          content=content,
+                                          default_ssd=default_storage,
+                                          callbacks=[CloudWatchCallbackHandler(
+                                              log_group_name=log_group_name,
+                                              log_stream_name=adapter['id'],
+                                              function_name=type(self).__name__)]
+                                          ).upper().replace(" ", "")
+
             adapter["ssd"] = re.findall(r'SSD=(\S+)', predict)[0]
 
             if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
@@ -329,7 +378,14 @@ class IpadCellularClassifierPipeline:
             adapter["cellular"] = False
         else:
             try:
-                predict = self.ipad_cellular_chain.run(title=title, content=content).upper()
+                predict = self.ipad_cellular_chain.run(title=title,
+                                                       content=content,
+                                                       callbacks=[CloudWatchCallbackHandler(
+                                                           log_group_name=log_group_name,
+                                                           log_stream_name=adapter['id'],
+                                                           function_name=type(self).__name__)]
+                                                       ).upper()
+
                 adapter["cellular"] = re.findall(r'(\w+)', predict)[0] == "TRUE"
             except Exception as e:
                 adapter["cellular"] = False
@@ -374,7 +430,14 @@ class AppleCarePlusClassifierPipeline:
 
         if regex.search(title + content) is not None:
             try:
-                predict = self.apple_care_plus_chain.run(title=title, content=content).upper()
+                predict = self.apple_care_plus_chain.run(title=title,
+                                                         content=content,
+                                                         callbacks=[CloudWatchCallbackHandler(
+                                                             log_group_name=log_group_name,
+                                                             log_stream_name=adapter['id'],
+                                                             function_name=type(self).__name__)]
+                                                         ).upper()
+
                 adapter["apple_care_plus"] = re.findall(r'(\w+)', predict)[0] == "TRUE"
             except Exception as e:
                 adapter["apple_care_plus"] = False
