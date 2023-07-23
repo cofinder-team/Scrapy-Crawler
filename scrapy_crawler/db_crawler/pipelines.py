@@ -636,8 +636,8 @@ class DBItemClassifierPipeline:
                     self.session.query(ItemIpad)
                     .filter(
                         ItemIpad.model == model_id,
-                        ItemIpad.gen == item["generation"],
-                        ItemIpad.storage == item["ssd"],
+                        ItemIpad.generation == item["generation"],
+                        ItemIpad.ssd == item["ssd"],
                         ItemIpad.cellular == item["cellular"],
                     )
                     .first()

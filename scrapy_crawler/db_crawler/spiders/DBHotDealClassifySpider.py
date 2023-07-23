@@ -35,11 +35,13 @@ class DBHotDealClassifySpider(scrapy.Spider):
         self.session = sessionmaker(bind=get_engine())()
 
     def get_unclassified_items(self) -> list[DBItem]:
+        from sqlalchemy import null
+
         item = (
             self.session.query(RawUsedItem)
-            .filter(RawUsedItem.classified is false())
-            .filter(RawUsedItem.type is None)
-            .filter(RawUsedItem.item_id is None)
+            .filter(RawUsedItem.classified == false())
+            .filter(RawUsedItem.type == null())
+            .filter(RawUsedItem.item_id == null())
             .filter(
                 RawUsedItem.date
                 >= f"{datetime.datetime.utcnow().date() - datetime.timedelta(days=4)}}}"
