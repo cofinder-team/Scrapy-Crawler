@@ -1,37 +1,39 @@
-# -*- coding: utf-8 -*-
 import logging
 
 from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
-
-from scrapy_crawler.util.db.Postgres import PostgresClient
 from scrapy.exceptions import DropItem
 from scrapy.selector import Selector
+from sqlalchemy.orm import sessionmaker
+
+from scrapy_crawler.util.db.models import RawUsedItem
+from scrapy_crawler.util.db.settings import get_engine
 
 
 class DuplicateFilterPipeline:
     name = "DuplicateFilterPipeline"
 
     def __init__(self):
-        self.db = PostgresClient()
-        self.cur = self.db.getCursor()
+        self.Session = sessionmaker(bind=get_engine())
+        self.session = self.Session()
 
-    def url_already_exists(self, url):
-        self.cur.execute("SELECT * FROM macguider.raw_used_item WHERE url = %s", (url,))
-        return self.cur.fetchone()
-
-    def title_already_exists(self, title):
-        self.cur.execute(
-            "SELECT * FROM macguider.raw_used_item WHERE title = %s", (title,)
+    def is_duplicated(self, adapter: ItemAdapter) -> bool:
+        item = (
+            self.session.query(RawUsedItem)
+            .filter(RawUsedItem.url == adapter["url"])
+            .filter(
+                RawUsedItem.writer == adapter["writer"]
+                and RawUsedItem.title == adapter["title"]
+            )
+            .first()
         )
-        return self.cur.fetchone()
+
+        return item is not None
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
-        if self.url_already_exists(adapter["url"]) or self.title_already_exists(
-            adapter["title"]
-        ):
+        if self.is_duplicated(adapter):
             raise DropItem("Duplicate item found: %s" % item)
         return item
 
@@ -94,29 +96,27 @@ class PostgresPipeline:
     name = "postgres_pipeline"
 
     def __init__(self):
-        self.db = PostgresClient()
-        self.cur = self.db.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
         try:
-            self.cur.execute(
-                "INSERT INTO macguider.raw_used_item (url, img_url, price, date, writer, title, content, source) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                (
-                    adapter["url"],
-                    adapter["img_url"],
-                    adapter["price"],
-                    adapter["date"],
-                    adapter["writer"],
-                    adapter["title"],
-                    adapter["content"],
-                    "중고나라",
-                ),
+            self.session.add(
+                RawUsedItem(
+                    url=adapter["url"],
+                    img_url=adapter["img_url"],
+                    price=adapter["price"],
+                    date=adapter["date"],
+                    writer=adapter["writer"],
+                    title=adapter["title"],
+                    content=adapter["content"],
+                    source="중고나라",
+                )
             )
-            self.db.commit()
+            self.session.commit()
         except Exception as e:
             logging.error(e)
-            self.db.rollback()
+            self.session.rollback()
 
         return item
