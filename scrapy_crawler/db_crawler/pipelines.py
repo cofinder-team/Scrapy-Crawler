@@ -809,5 +809,6 @@ class SlackAlertPipeline:
         else:
             self.slack_bot.post_hotdeal_message(
                 console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
+                source=adapter["source"],
             )
         return item
