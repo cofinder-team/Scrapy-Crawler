@@ -1,6 +1,11 @@
+import datetime
+
 import scrapy
-from scrapy_crawler.util.db.Postgres import PostgresClient
+from sqlalchemy.orm import sessionmaker
+
 from scrapy_crawler.db_crawler.items import DBItem
+from scrapy_crawler.util.db.models import RawUsedItem
+from scrapy_crawler.util.db.settings import get_engine
 
 
 class DBHotDealClassifySpider(scrapy.Spider):
@@ -26,19 +31,21 @@ class DBHotDealClassifySpider(scrapy.Spider):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.conn = PostgresClient()
-        self.cur = self.conn.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
-    def get_unclassified_items(self):
-        self.cur.execute(
-            "SELECT * "
-            "FROM macguider.raw_used_item "
-            "WHERE classified = FALSE "
-            "AND type is NULL AND item_id is NULL "
-            "AND date >= '2023-07-14'"
-            "ORDER BY date "
+    def get_unclassified_items(self) -> list[DBItem]:
+        item = (
+            self.session.query(RawUsedItem)
+            .filter(not RawUsedItem.classified)
+            .filter(RawUsedItem.type is None)
+            .filter(RawUsedItem.item_id is None)
+            .filter(
+                RawUsedItem.date
+                >= f"{datetime.datetime.utcnow().date() - datetime.timedelta(days=4)}}}"
+            )
+            .order_by(RawUsedItem.date)
         )
-        return self.cur.fetchall()
+        return item.all()
 
     def start_requests(self):
         # Fake fetch
@@ -47,17 +54,17 @@ class DBHotDealClassifySpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         unclassified_items = self.get_unclassified_items()
 
-        for row in unclassified_items:
+        for item in unclassified_items:
             yield DBItem(
-                id=row[0],
-                writer=row[1],
-                title=row[2],
-                content=row[3],
-                price=row[4],
-                source=row[5],
-                date=row[6],
-                url=row[7],
-                img_url=row[8],
-                type=row[9],
-                item_id=row[10],
+                id=item.id,
+                writer=item.writer,
+                title=item.title,
+                content=item.content,
+                price=item.price,
+                source=item.source,
+                date=item.date,
+                url=item.url,
+                img_url=item.img_url,
+                type=item.type,
+                item_id=item.item_id,
             )

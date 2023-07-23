@@ -1,39 +1,39 @@
-import scrapy
-from scrapy_crawler.util.db.Postgres import PostgresClient
-from scrapy_crawler.db_crawler.items import DBItem, JgArticle
 import json
+
+import scrapy
+from sqlalchemy.orm import sessionmaker
+
+from scrapy_crawler.db_crawler.items import JgArticle
+from scrapy_crawler.util.db.models import Deal
+from scrapy_crawler.util.db.settings import get_engine
 
 
 class DBSoldOutSpider(scrapy.Spider):
     name = "DBSoldOutSpider"
     custom_settings = {
         "ITEM_PIPELINES": {
-            "scrapy_crawler.db_crawler.pipelines.SoldOutClassifierPipeline": 1,
-            "scrapy_crawler.db_crawler.pipelines.DBUpdateLastCrawledPipeline": 2,
+            "scrapy_crawler.db_crawler.pipelines.DBUpdateLastCrawledPipeline": 1,
+            "scrapy_crawler.db_crawler.pipelines.SoldOutClassifierPipeline": 2,
             "scrapy_crawler.db_crawler.pipelines.SlackAlertPipeline": 3,
         },
     }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.conn = PostgresClient()
-        self.cur = self.conn.getCursor()
+        self.session = sessionmaker(bind=get_engine())()
 
-    def get_unsold_items(self):
-        self.cur.execute(
-            "SELECT * "
-            "FROM macguider.deal "
-            "WHERE sold = false "
-            "ORDER BY last_crawled "
+    def get_unsold_items(self) -> list[Deal]:
+        item = (
+            self.session.query(Deal).filter(not Deal.sold).order_by(Deal.last_crawled)
         )
-        return self.cur.fetchall()
+        return item.all()
 
     def start_requests(self):
         unsold_items = self.get_unsold_items()
 
-        for row in unsold_items:
-            id = row[0]
-            url = row[7].split("/")[-1]
+        for item in unsold_items:
+            id = item.id
+            url = item.url.split("/")[-1]
             yield scrapy.Request(
                 url=f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}",
                 callback=self.parse,

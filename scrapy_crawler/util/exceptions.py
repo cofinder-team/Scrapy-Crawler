@@ -1,17 +1,17 @@
 from scrapy.exceptions import DropItem
+from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.util.db.Postgres import PostgresClient
+from scrapy_crawler.util.db.models import RawUsedItem
+from scrapy_crawler.util.db.settings import get_engine
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
 
 
 class DropAndAlert(DropItem):
     def __init__(self, item, message="Custom Exception occurred"):
+        super().__init__(message)
         self.item = item
         self.message = message
-        self.db = PostgresClient()
-        self.cursor = self.db.getCursor()
-
-        super().__init__(self.message)
+        self.session = sessionmaker(bind=get_engine())()
         self._notify_message(item)
         self._set_classified(item)
 
@@ -24,8 +24,7 @@ class DropAndAlert(DropItem):
         LabelingSlackBot().post_fail_message(id, title, source, url, self.message)
 
     def _set_classified(self, item):
-        self.cursor.execute(
-            "UPDATE macguider.raw_used_item SET classified = TRUE WHERE id = %s",
-            (item["id"],),
+        self.session.query(RawUsedItem).filter(RawUsedItem.id == item["id"]).update(
+            {RawUsedItem.classified: True}
         )
-        self.db.commit()
+        self.session.commit()
