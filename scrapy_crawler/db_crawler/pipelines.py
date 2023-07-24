@@ -618,8 +618,8 @@ class DBItemClassifierPipeline:
                         .filter(
                             ItemMacbook.model == model_id,
                             ItemMacbook.chip == item["chip"],
-                            ItemMacbook.cpu == item["cpu_core"],
-                            ItemMacbook.gpu == item["gpu_core"],
+                            ItemMacbook.cpu_core == item["cpu_core"],
+                            ItemMacbook.gpu_core == item["gpu_core"],
                             ItemMacbook.ssd == item["ssd"],
                             ItemMacbook.ram == item["ram"],
                         )
