@@ -6,6 +6,7 @@ import requests
 from itemadapter import ItemAdapter
 from langchain import LLMChain
 from scrapy.exceptions import DropItem
+from sqlalchemy import true
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.db_crawler.items import DBIpadItem, DBMacbookItem
@@ -763,7 +764,7 @@ class SoldOutClassifierPipeline:
     def set_sold_out(self, item: ItemAdapter):
         try:
             self.session.query(Deal).filter(Deal.id == item["id"]).update(
-                {Deal.sold: True}
+                {Deal.sold: true()}
             )
             self.session.commit()
         except Exception as e:
