@@ -44,7 +44,7 @@ class DBHotDealClassifySpider(scrapy.Spider):
             .filter(RawUsedItem.item_id == null())
             .filter(
                 RawUsedItem.date
-                >= f"{datetime.datetime.utcnow().date() - datetime.timedelta(days=4)}}}"
+                >= f"{datetime.datetime.now().date() - datetime.timedelta(days=4)}}}"
             )
             .order_by(RawUsedItem.date)
         )

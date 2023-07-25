@@ -795,7 +795,7 @@ class DBUpdateLastCrawledPipeline:
 
         try:
             self.session.query(Deal).filter(Deal.id == adapter["id"]).update(
-                {Deal.last_crawled: datetime.utcnow()}
+                {Deal.last_crawled: datetime.now()}
             )
             self.session.commit()
         except Exception as e:
