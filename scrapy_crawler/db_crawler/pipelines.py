@@ -516,14 +516,12 @@ class UnusedClassifierPipeline:
 class AppleCarePlusClassifierPipeline:
     def __init__(self):
         self.apple_care_plus_chain = apple_care_plus_chain
+        self.session = sessionmaker(bind=get_engine())()
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
-
-        if type(self).__name__ not in adapter["pipelines"]:
-            return item
-
+        apple_care = False
         title = adapter["title"]
         content = adapter["content"]
 
@@ -543,10 +541,14 @@ class AppleCarePlusClassifierPipeline:
                     ],
                 ).upper()
 
-                adapter["apple_care_plus"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
+                apple_care = re.findall(r"(\w+)", predict)[0] == "TRUE"
             except Exception:
-                adapter["apple_care_plus"] = False
-                return
+                apple_care = False
+
+        self.session.query(Deal).filter(Deal.id == adapter["id"]).update(
+            {"apple_care": apple_care}
+        )
+        self.session.commit()
 
         return item
 
