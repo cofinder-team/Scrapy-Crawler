@@ -29,6 +29,7 @@ class DBSoldOutSpider(scrapy.Spider):
             self.session.query(Deal)
             .filter(Deal.sold == false())
             .order_by(Deal.last_crawled)
+            .limit(20)
         )
         return item.all()
 
