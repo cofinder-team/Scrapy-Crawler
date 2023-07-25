@@ -7,17 +7,10 @@ def dropped_message_template(id: str, title: str, source: str, url: str, message
         {
             "type": "section",
             "fields": [
-                {"type": "mrkdwn", "text": f"*게시글 주소:*\n<{url}|{source}>"},
+                {"type": "mrkdwn", "text": f"*게시글 ID:*\n{id}"},
                 {"type": "mrkdwn", "text": f"*게시글 제목:*\n{title}"},
+                {"type": "mrkdwn", "text": f"*게시글 주소:*\n<{url}|{source}>"},
             ],
-        },
-        {"type": "divider"},
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": f"*지금 당장 수정하러 가기:*\n<{f'https://dev.macguider.io/deals/admin/{id}'}|{'수정 콘솔'}>",
-            },
         },
     ]
 
