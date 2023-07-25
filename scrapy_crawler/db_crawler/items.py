@@ -47,3 +47,21 @@ class JgArticle(scrapy.Item):
     price = scrapy.Field()
     status = scrapy.Field()
     type = scrapy.Field()
+
+
+class DealItem(scrapy.Item):
+    id = scrapy.Field()
+    type = scrapy.Field()
+    item_id = scrapy.Field()
+    price = scrapy.Field()
+    sold = scrapy.Field()
+    unused = scrapy.Field()
+    source = scrapy.Field()
+    url = scrapy.Field()
+    image = scrapy.Field()
+    date = scrapy.Field()
+    last_crawled = scrapy.Field()
+    writer = scrapy.Field()
+    title = scrapy.Field()
+    content = scrapy.Field()
+    apple_care = scrapy.Field()

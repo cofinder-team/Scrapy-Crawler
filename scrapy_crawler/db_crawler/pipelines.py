@@ -824,3 +824,34 @@ class SlackAlertPipeline:
                 source=adapter["source"],
             )
         return item
+
+
+class FillDealPipeline:
+    name = "FillDealPipeline"
+
+    def __init__(self):
+        self.session = sessionmaker(bind=get_engine())()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+
+        try:
+            record = (
+                self.session.query(RawUsedItem)
+                .join(Deal, Deal.url == RawUsedItem.url)
+                .filter(Deal.id == adapter["id"])
+                .all()
+            )
+
+            self.session.query(Deal).filter(Deal.id == adapter["id"]).update(
+                {
+                    Deal.writer: record[0].writer,
+                    Deal.title: record[0].title,
+                    Deal.content: record[0].content,
+                }
+            )
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")

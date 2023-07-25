@@ -63,6 +63,10 @@ class Deal(Base):
     image = Column("image", LargeBinary)
     date = Column("date", String)
     last_crawled = Column("last_crawled", String)
+    writer = Column("writer", String)
+    title = Column("title", String)
+    content = Column("content", String)
+    apple_care = Column("apple_care", Boolean)
 
 
 class ItemIpad(Base):
