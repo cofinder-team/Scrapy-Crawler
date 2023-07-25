@@ -798,6 +798,7 @@ class DBUpdateLastCrawledPipeline:
                 {Deal.last_crawled: datetime.now()}
             )
             self.session.commit()
+            logging.info(f"[{type(self).__name__}] update last_crawled")
         except Exception as e:
             self.session.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
