@@ -39,21 +39,23 @@ class DBSoldOutSpider(scrapy.Spider):
         for item in unsold_items:
             id = item.id
             url = item.url.split("/")[-1]
+            request_url = f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}"
             yield scrapy.Request(
-                url=f"https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/{url}",
+                url=request_url,
                 callback=self.parse,
-                meta={"item_id": id},
+                errback=lambda failure: self.logger.error(failure),
+                meta={"item_id": id, "handle_httpstatus_list": [200, 404]},
             )
 
     def parse(self, response, **kwargs):
         # 글이 삭제된 경우
-        if response.status == 404:
+        if response.status != 404:
+            item_id = response.meta["item_id"]
+            saleInfo = json.loads(response.text)["result"]["saleInfo"]
+
+            price = saleInfo["price"]
+            status = saleInfo["saleStatus"]
+
+            yield JgArticle(id=item_id, price=price, status=status)
+        else:
             yield JgArticle(id=response.meta["item_id"], price=0, status="SOLD_OUT")
-
-        item_id = response.meta["item_id"]
-        saleInfo = json.loads(response.text)["result"]["saleInfo"]
-
-        price = saleInfo["price"]
-        status = saleInfo["saleStatus"]
-
-        yield JgArticle(id=item_id, price=price, status=status)
