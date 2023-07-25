@@ -60,10 +60,11 @@ class JgKeywordCrawler(scrapy.Spider):
         title = article["subject"]
         writer = article["writer"]["id"]
 
-        # Convert timestamp to datetime
-        date = datetime.datetime.fromtimestamp(article["writeDate"] / 1000).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        # Convert timestamp to local datetime
+        date = (
+            datetime.datetime.fromtimestamp(article["writeDate"] / 1000)
+            + datetime.timedelta(hours=9)
+        ).strftime("%Y-%m-%d %H:%M:%S")
 
         # Convert escaped html to normal html
         content = html.unescape(article["contentHtml"])
