@@ -508,8 +508,23 @@ class UnusedClassifierPipeline:
         title = adapter["title"]
         content = adapter["content"]
 
-        regex = re.compile(r"미개봉")
-        adapter["unused"] = regex.search(title + content) is not None
+        regex = re.compile(r"미개봉|새상품")
+        if regex.search(title + content) is not None:
+            predict = unused_chain.run(
+                title=title,
+                content=content,
+                callbacks=[
+                    CloudWatchCallbackHandler(
+                        log_group_name=log_group_name,
+                        log_stream_name=adapter["id"],
+                        function_name=type(self).__name__,
+                    )
+                ],
+            )
+
+            adapter["unused"] = "TRUE" in predict.upper()
+        else:
+            adapter["unused"] = False
         return item
 
 
@@ -539,9 +554,9 @@ class AppleCarePlusClassifierPipeline:
                             function_name=type(self).__name__,
                         )
                     ],
-                ).upper()
+                )
 
-                apple_care = re.findall(r"(\w+)", predict)[0] == "TRUE"
+                apple_care = "TRUE" in predict.upper()
             except Exception:
                 apple_care = False
 
