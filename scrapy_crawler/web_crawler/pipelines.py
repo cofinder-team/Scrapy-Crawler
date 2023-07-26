@@ -67,6 +67,7 @@ class ContentScraperPipeline:
                 and not line.startswith("※")
                 and not line.startswith("상단 중고나라")
                 and not line.startswith("위에 다운로드 ")
+                and not line.startswith("──")
             ):
                 filtered_lines.append(line)
 
