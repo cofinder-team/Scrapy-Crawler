@@ -744,7 +744,7 @@ class HotDealClassifierPipeline:
             return self.cache[(item["type"], item["item_id"], item["unused"])]
 
         price_url = (
-            f"https://dev-api.macguider.io/price/deal/"
+            f"https://api.macguider.io/price/deal/"
             f"{item['type']}/{item['item_id']}?unused={'true' if item['unused'] else 'false'}"
         )
 
