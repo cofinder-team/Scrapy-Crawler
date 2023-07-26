@@ -18,8 +18,8 @@ class DBDealAppleCareSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.session = sessionmaker(bind=get_engine())()
 
     def get_unclassified_items(self) -> list[Type[Deal]]:
