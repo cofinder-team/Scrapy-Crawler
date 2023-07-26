@@ -59,7 +59,7 @@ class JgKeywordCrawler(scrapy.Spider):
         url = response.meta["article_url"]
         title = article["subject"]
         writer = article["writer"]["id"]
-
+        product_status = saleInfo["productCondition"]
         # Convert timestamp to local datetime
         date = (
             datetime.datetime.fromtimestamp(article["writeDate"] / 1000)
@@ -71,6 +71,9 @@ class JgKeywordCrawler(scrapy.Spider):
 
         price = saleInfo["price"]
         img_url = saleInfo["image"]["url"]
+
+        if product_status == "USED":
+            pass
 
         yield JgArticle(
             url=url,
