@@ -524,7 +524,6 @@ class UnusedClassifierPipeline:
 
             adapter["unused"] = "TRUE" in predict.upper()
         else:
-            adapter["pipelines"].remove("SlackAlertPipeline")
             adapter["unused"] = False
         return item
 
@@ -839,11 +838,10 @@ class SlackAlertPipeline:
                 url=adapter["id"],
             )
         else:
-            if adapter["model"] == "IPADPRO":
-                self.slack_bot.post_hotdeal_message(
-                    console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
-                    source=adapter["source"],
-                )
+            self.slack_bot.post_hotdeal_message(
+                console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
+                source=adapter["source"],
+            )
         return item
 
 
