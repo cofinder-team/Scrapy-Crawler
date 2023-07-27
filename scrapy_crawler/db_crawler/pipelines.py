@@ -831,6 +831,8 @@ class SlackAlertPipeline:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         logging.info(f"[{type(self).__name__}] start processing item: {adapter['id']}")
+        if type(self).__name__ not in adapter["pipelines"]:
+            return item
 
         if adapter["type"] == "SOLD_OUT":
             self.slack_bot.post_soldout_message(
