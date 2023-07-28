@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime
+from typing import Type
 
 import requests
 from itemadapter import ItemAdapter
@@ -31,6 +32,7 @@ from scrapy_crawler.util.db.models import Deal, ItemIpad, ItemMacbook, RawUsedIt
 from scrapy_crawler.util.db.settings import get_engine
 from scrapy_crawler.util.exceptions import DropAndAlert
 from scrapy_crawler.util.slack.SlackBots import LabelingSlackBot
+from scrapy_crawler.util.utils import save_image_from_url
 
 log_group_name = "scrapy-chatgpt"
 
@@ -142,7 +144,8 @@ class MacbookModelClassifierPipeline:
         if model in self.screen_size_map:
             adapter["screen_size"] = self.screen_size_map.get(model, screen_size)
 
-        adapter["pipelines"].remove(SlackAlertPipeline.__name__)
+        if SlackAlertPipeline.__name__ in adapter["pipelines"]:
+            adapter["pipelines"].remove(SlackAlertPipeline.__name__)
         return item
 
 
@@ -310,7 +313,7 @@ class IpadModelClassifierPipeline:
             adapter["screen_size"] = self.screen_size_map.get(model, screen_size)
 
         # 아이패드 프로를 제외하고 Slack 알림 제거
-        if model != "IPADPRO":
+        if model != "IPADPRO" and SlackAlertPipeline.__name__ in adapter["pipelines"]:
             adapter["pipelines"].remove(SlackAlertPipeline.__name__)
 
         return item
@@ -733,6 +736,34 @@ class DBExportPipeline:
         except Exception as e:
             self.session.rollback()
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
+
+        # SlackAlertPipeline 이 없으면(취약 분류가 아닌 경우), 바로 Deal에 저장
+        if SlackAlertPipeline.__name__ not in adapter["pipelines"]:
+            entity: Type[RawUsedItem] = (
+                self.session.query(RawUsedItem)
+                .filter(RawUsedItem.id == adapter["id"])
+                .first()
+            )
+
+            if entity is not None:
+                img_binary = save_image_from_url(entity.img_url)
+                self.session.add(
+                    Deal(
+                        type=entity.type,
+                        item_id=entity.item_id,
+                        price=entity.price,
+                        unused=entity.unused,
+                        source=entity.source,
+                        url=entity.url,
+                        image=img_binary.getvalue(),
+                        date=entity.date,
+                        writer=entity.writer,
+                        title=entity.title,
+                        content=entity.content,
+                    )
+                )
+                self.session.commit()
+                logging.info(f"[{type(self).__name__}] item saved to Deal table")
 
         return item
 
