@@ -11,7 +11,7 @@ def create_llm_chain(model_name: str, template_path: str, input_variables: list[
         openai_api_key=settings.get("OPENAI_API_KEY"),
         model_name=model_name,
     )
-    with open(template_path, "r", encoding="UTF-8") as file:
+    with open(template_path, encoding="UTF-8") as file:
         template: PromptTemplate = PromptTemplate(
             input_variables=input_variables, template=file.read()
         )
@@ -22,7 +22,7 @@ PREFIX = "scrapy_crawler/util/chatgpt/prompts/%s"
 GPT4_MODEL_NAME = "gpt-4-0613"
 GPT3_MODEL_NAME = "gpt-3.5-turbo-0613"
 unused_chain: LLMChain = create_llm_chain(
-    GPT3_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
+    GPT4_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
 )
 apple_care_plus_chain: LLMChain = create_llm_chain(
     GPT3_MODEL_NAME, PREFIX % "apple_care_plus.txt", ["title", "content"]
