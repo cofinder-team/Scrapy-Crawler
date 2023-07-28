@@ -142,6 +142,7 @@ class MacbookModelClassifierPipeline:
         if model in self.screen_size_map:
             adapter["screen_size"] = self.screen_size_map.get(model, screen_size)
 
+        adapter["pipelines"].remove(SlackAlertPipeline.__name__)
         return item
 
 
@@ -307,6 +308,10 @@ class IpadModelClassifierPipeline:
         # Manually set screen size
         if model in self.screen_size_map:
             adapter["screen_size"] = self.screen_size_map.get(model, screen_size)
+
+        # 아이패드 프로를 제외하고 Slack 알림 제거
+        if model != "IPADPRO":
+            adapter["pipelines"].remove(SlackAlertPipeline.__name__)
 
         return item
 
