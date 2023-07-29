@@ -746,7 +746,7 @@ class DBExportPipeline:
             )
 
             if entity is not None:
-                img_binary = save_image_from_url(entity.img_url)
+                img_binary = save_image_from_url(entity.img_url + "?type=w300")
                 self.session.add(
                     Deal(
                         type=entity.type,
