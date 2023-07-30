@@ -4,6 +4,7 @@ import json
 from urllib import parse
 
 import scrapy
+from scrapy.exceptions import DropItem
 
 from scrapy_crawler.web_crawler.items import JgArticle
 
@@ -73,7 +74,7 @@ class JgKeywordCrawler(scrapy.Spider):
         img_url = saleInfo["image"]["url"]
 
         if product_status == "USED":
-            pass
+            raise DropItem("A ranked product")
 
         yield JgArticle(
             url=url,
