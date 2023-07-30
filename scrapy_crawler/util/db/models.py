@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String
@@ -62,7 +63,13 @@ class Deal(Base):
     url = Column("url", String)
     image = Column("image", LargeBinary)
     date = Column("date", String)
-    last_crawled = Column("last_crawled", String)
+    last_crawled = Column(
+        "last_crawled",
+        String,
+        default=(datetime.datetime.now() + datetime.timedelta(hours=9)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+    )
     writer = Column("writer", String)
     title = Column("title", String)
     content = Column("content", String)
