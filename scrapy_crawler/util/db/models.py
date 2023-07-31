@@ -74,6 +74,7 @@ class Deal(Base):
     title = Column("title", String)
     content = Column("content", String)
     apple_care = Column("apple_care", Boolean)
+    deleted_at = Column("deleted_at", String)
 
 
 class ItemIpad(Base):

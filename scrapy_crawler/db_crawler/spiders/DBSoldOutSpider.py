@@ -2,7 +2,7 @@ import json
 from typing import Type
 
 import scrapy
-from sqlalchemy import false
+from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.db_crawler.items import JgArticle
@@ -28,6 +28,7 @@ class DBSoldOutSpider(scrapy.Spider):
         item = (
             self.session.query(Deal)
             .filter(Deal.sold == false())
+            .filter(Deal.deleted_at == null())
             .order_by(Deal.last_crawled)
             .limit(20)
         )
