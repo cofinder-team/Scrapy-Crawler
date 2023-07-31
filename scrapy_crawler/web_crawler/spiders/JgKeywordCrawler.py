@@ -60,7 +60,10 @@ class JgKeywordCrawler(scrapy.Spider):
         url = response.meta["article_url"]
         title = article["subject"]
         writer = article["writer"]["id"]
-        product_status = saleInfo["productCondition"]
+        product_status = (
+            saleInfo["productCondition"] if "productCondition" in saleInfo else "EMPTY"
+        )
+
         # Convert timestamp to local datetime
         date = (
             datetime.datetime.fromtimestamp(article["writeDate"] / 1000)
