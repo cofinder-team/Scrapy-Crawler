@@ -805,6 +805,11 @@ class HotDealClassifierPipeline:
                 item, f"price is too high: {adapter['price']} > {average}"
             )
 
+        elif adapter["price"] < average * 0.8:
+            raise DropAndAlert(
+                item, f"price is too low: {adapter['price']} < {average * 0.8}"
+            )
+
         return item
 
 
