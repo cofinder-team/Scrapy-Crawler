@@ -127,7 +127,7 @@ class PostgresPipeline:
         url, img_url, price, date, writer, title, content = "", "", "", "", "", "", ""
 
         if source == "번개장터":
-            url = f"https://api.bunjang.co.kr/api/pms/v2/products-detail/{adapter['pid']}?viewerUid=-1"
+            url = f"https://m.bunjang.co.kr/products/{adapter['pid']}?ref=%ED%99%88"
             img_url = adapter["imageUrl"]
             price = adapter["price"]
             date = adapter["updatedAt"]
