@@ -128,7 +128,7 @@ class PostgresPipeline:
 
         if source == "번개장터":
             url = f"https://m.bunjang.co.kr/products/{adapter['pid']}?ref=%ED%99%88"
-            img_url = adapter["imageUrl"]
+            img_url = adapter["imageUrl"].replace("{cnt}", "1").replace("{res}", 300)
             price = adapter["price"]
             date = adapter["updatedAt"]
             writer = adapter["writer"]
