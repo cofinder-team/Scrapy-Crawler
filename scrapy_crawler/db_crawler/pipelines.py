@@ -738,7 +738,10 @@ class DBExportPipeline:
             raise DropAndAlert(item, f"[{self.name}]Unknown error : {e}")
 
         # SlackAlertPipeline 이 없으면(취약 분류가 아닌 경우), 바로 Deal에 저장
-        if SlackAlertPipeline.__name__ not in adapter["pipelines"]:
+        if (
+            SlackAlertPipeline.__name__ not in adapter["pipelines"]
+            and adapter["source"] == "중고나라"
+        ):
             entity: Type[RawUsedItem] = (
                 self.session.query(RawUsedItem)
                 .filter(RawUsedItem.id == adapter["id"])
