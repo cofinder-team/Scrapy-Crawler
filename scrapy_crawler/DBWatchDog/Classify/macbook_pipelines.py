@@ -52,7 +52,10 @@ class ModelClassifierPipeline:
             ).upper()
 
             model = re.search(r"AIR|PRO|MINI", predict).group()
-            screen_size = int(re.findall("13|14|16", predict)[0])
+            if model == "MINI":
+                screen_size = -1
+            else:
+                screen_size = int(re.findall("13|14|15|16", predict)[0])
 
             adapter["model"] = model
             adapter["screen_size"] = screen_size
