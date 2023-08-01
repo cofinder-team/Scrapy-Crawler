@@ -13,3 +13,4 @@ boto3
 scrapeops_scrapy
 openai
 pre-commit
+watchtower
