@@ -5,6 +5,7 @@ from urllib import parse
 import scrapy
 
 from scrapy_crawler.common.utils import to_local_timestring
+from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.metadata.total_search import TotalSearchRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleItem
@@ -29,9 +30,11 @@ class JgKeywordSpider(scrapy.Spider):
 
     def __init__(self, keyword=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        init_cloudwatch_logger(self.name)
         self.keyword = keyword
 
     def start_requests(self):
+        self.logger.info(f"Start crawling keyword: {self.keyword}")
         yield scrapy.Request(
             TOTAL_SEARCH_FETCH_URL % parse.quote(self.keyword), self.parse
         )
@@ -49,6 +52,7 @@ class JgKeywordSpider(scrapy.Spider):
             )
         )
 
+        self.logger.info(f"Found {len(target_articles)} articles")
         for article in target_articles:
             yield scrapy.Request(
                 ARTICLE_API_URL % article.articleId,

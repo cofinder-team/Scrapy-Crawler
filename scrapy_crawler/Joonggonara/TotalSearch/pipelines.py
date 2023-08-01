@@ -54,9 +54,15 @@ class DuplicateFilterPipeline:
             return False
 
     def process_item(self, item, spider):
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
+        )
         adapter = ItemAdapter(item)
 
         if self.is_duplicated(adapter):
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Duplicate item found"
+            )
             raise DropItem("Duplicate item found: %s" % item["url"].split("/")[-1])
 
         return item
@@ -66,6 +72,9 @@ class ManualFilterPipeline:
     name = "ManualFilterPipeline"
 
     def process_item(self, item, spider):
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
+        )
         adapter = ItemAdapter(item)
 
         title, content, price, condition = (
@@ -76,12 +85,21 @@ class ManualFilterPipeline:
         )
 
         if has_forbidden_keyword(title + content):
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Forbidden word found"
+            )
             raise DropItem("Forbidden word found: %s" % item["title"])
 
         if too_low_price(price):
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too low price"
+            )
             raise DropItem("Too low price: %s" % item["price"])
 
         if is_used_item(condition):
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Used item"
+            )
             raise DropItem("Used item: %s" % item["url"].split("/")[-1])
 
         return item
@@ -91,6 +109,9 @@ class HtmlParserPipeline:
     name = "HtmlParserPipeline"
 
     def process_item(self, item, spider):
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
+        )
         adapter = ItemAdapter(item)
 
         selector = Selector(text=adapter["content"])
@@ -136,6 +157,9 @@ class PostgresExportPipeline:
         self.session.close()
 
     def process_item(self, item, spider):
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
+        )
         adapter = ItemAdapter(item)
 
         try:
@@ -156,9 +180,13 @@ class PostgresExportPipeline:
                 )
             )
             self.session.commit()
-            logging.warning("Item saved: %s" % item["url"])
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] item saved"
+            )
         except Exception as e:
-            logging.error(e)
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] item save failed with error: {e}"
+            )
             self.session.rollback()
 
         return item
