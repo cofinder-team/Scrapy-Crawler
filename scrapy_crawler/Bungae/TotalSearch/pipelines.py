@@ -52,6 +52,7 @@ class ManualFilterPipeline:
             raise DropItem(f"Has forbidden keyword: {item['pid']}")
 
         if too_low_price(item["price"]):
+            spider.logger.info(f"[{type(self).__name__}][{item['pid']}] Too low price")
             raise DropItem(f"Too low price: {item['pid']}")
 
         return item
