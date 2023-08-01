@@ -24,25 +24,19 @@ class DuplicateFilterPipeline:
 
     def process_item(self, item, spider):
         spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
-        try:
-            entity = (
-                self.session.query(RawUsedItem)
-                .filter(RawUsedItem.url == ARTICLE_URL % str(item["pid"]))
-                .first()
-            )
+        entity = (
+            self.session.query(RawUsedItem)
+            .filter(RawUsedItem.url == ARTICLE_URL % str(item["pid"]))
+            .first()
+        )
 
-            if entity is not None:
-                spider.logger.info(
-                    f"[{type(self).__name__}][{item['pid']}] Duplicate item found"
-                )
-                raise DropItem(f"Duplicate item found: {item['pid']}")
-            else:
-                return item
-        except Exception as e:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['pid']} Unknown Error: {e}"
+        if entity is not None:
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['pid']}] Duplicate item found"
             )
-            raise DropItem(f"Unknown Error: {item['pid']}")
+            raise DropItem(f"Duplicate item found: {item['pid']}")
+        else:
+            return item
 
 
 class ManualFilterPipeline:
