@@ -335,6 +335,8 @@ class PersistPipeline:
                     url=entity.url,
                     title=entity.title,
                     content=entity.content,
+                    writer=entity.writer,
+                    image=entity.image,
                     apple_care=adapter["apple_care_plus"],
                 )
             )
