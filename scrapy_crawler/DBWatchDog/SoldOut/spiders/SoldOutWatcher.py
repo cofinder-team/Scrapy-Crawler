@@ -6,6 +6,7 @@ from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db import Deal, get_engine
+from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
 from scrapy_crawler.Joonggonara.utils.constants import ARTICLE_API_URL
@@ -23,6 +24,7 @@ class SoldOutWatcher(scrapy.Spider):
     def __init__(self, n=30, **kwargs):
         super().__init__(**kwargs)
         self.n = n
+        init_cloudwatch_logger(self.name)
         self.session = sessionmaker(bind=get_engine())()
 
     def get_unsold_items(self) -> list[Type[Deal]]:
@@ -50,12 +52,17 @@ class SoldOutWatcher(scrapy.Spider):
             )
 
     def parse(self, response, **kwargs):
-        root = ArticleRoot.from_dict(json.loads(response.text))
-        id = response.meta["item_id"]
-        resp_status = response.status
-        prod_status = root.result.saleInfo.saleStatus if root.result else None
-        price = root.result.saleInfo.price if root.result else 0
+        if response.status == 404:
+            yield ArticleStatus(
+                id=response.meta["item_id"], resp_status=404, prod_status="SOLD_OUT"
+            )
+        else:
+            root = ArticleRoot.from_dict(json.loads(response.text))
+            id = response.meta["item_id"]
+            resp_status = response.status
+            prod_status = root.result.saleInfo.saleStatus if root.result else None
+            price = root.result.saleInfo.price if root.result else 0
 
-        yield ArticleStatus(
-            id=id, price=price, resp_status=resp_status, prod_status=prod_status
-        )
+            yield ArticleStatus(
+                id=id, price=price, resp_status=resp_status, prod_status=prod_status
+            )
