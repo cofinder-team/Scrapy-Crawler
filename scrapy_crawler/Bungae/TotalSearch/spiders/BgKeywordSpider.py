@@ -8,6 +8,7 @@ from scrapy_crawler.Bungae.metadata.article import ArticleRoot
 from scrapy_crawler.Bungae.metadata.total_search import BgList, TotalSearchRoot
 from scrapy_crawler.Bungae.TotalSearch.items import ArticleItem
 from scrapy_crawler.Bungae.utils.constants import ARTICLE_API_URL, TOTAL_SEARCH_API_URL
+from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 
 
 class BgKeywordSpider(scrapy.Spider):
@@ -22,9 +23,11 @@ class BgKeywordSpider(scrapy.Spider):
 
     def __init__(self, keyword=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        init_cloudwatch_logger(self.name)
         self.keyword = keyword
 
     def start_requests(self):
+        self.logger.info(f"Start crawling keyword: {self.keyword}")
         yield scrapy.Request(
             TOTAL_SEARCH_API_URL % parse.quote(self.keyword), self.parse
         )
