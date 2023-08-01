@@ -36,8 +36,8 @@ class ModelClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
         predict = (
@@ -70,6 +70,7 @@ class ModelClassifierPipeline:
 
             return item
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"ModelClassifierPipeline: {e}")
 
 
@@ -107,10 +108,9 @@ class GenerationClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
-
         try:
             predict = self.gen_chain.run(
                 title=adapter["title"],
@@ -132,10 +132,8 @@ class GenerationClassifierPipeline:
                 adapter["generation"] = generation
                 return item
 
-            else:
-                raise DropItem(f"GenerationClassifierPipeline: {generation}")
-
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"GenerationClassifierPipeline: {e}")
 
 
@@ -179,8 +177,8 @@ class StorageClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
         title = adapter["title"]
@@ -215,6 +213,7 @@ class StorageClassifierPipeline:
 
             return item
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"StorageClassifierPipeline: {e}")
 
 
@@ -229,8 +228,8 @@ class CellularClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
         title = adapter["title"].upper()
@@ -256,7 +255,9 @@ class CellularClassifierPipeline:
 
                 adapter["cellular"] = re.findall(r"(\w+)", predict)[0] == "TRUE"
             except Exception as e:
-                logging.warning(f"CellularClassifierPipeline: {e}")
+                spider.logger.error(
+                    f"[{type(self).__name__}][{adapter['id']}] error: {e}"
+                )
                 adapter["cellular"] = False
 
         return item
@@ -312,11 +313,15 @@ class IpadClassifyPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
+
         ipadItem = self.get_item_id(adapter)
         if ipadItem is None:
+            spider.logger.error(
+                f"[{type(self).__name__}][{adapter['id']}] item not found in database"
+            )
             raise DropItem(f"Item not found in database : {adapter['id']}")
         adapter["item_id"] = ipadItem.id
 

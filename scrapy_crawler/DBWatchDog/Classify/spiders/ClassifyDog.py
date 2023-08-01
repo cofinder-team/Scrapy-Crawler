@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
 from scrapy_crawler.common.db.settings import get_engine
+from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.DBWatchDog.items import UnClassifiedItem
 
 
@@ -35,6 +36,7 @@ class ClassifyDog(scrapy.Spider):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        init_cloudwatch_logger(self.name)
         self.session = sessionmaker(bind=get_engine())()
 
     def get_unclassified_items(self) -> list[UnClassifiedItem]:

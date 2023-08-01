@@ -35,8 +35,8 @@ class ModelClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
         try:
             predict = self.macbook_chain.run(
@@ -60,6 +60,7 @@ class ModelClassifierPipeline:
             return item
 
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] {e}")
             raise DropItem(f"ModelClassifierPipeline: {e}")
 
 
@@ -92,8 +93,8 @@ class ChipClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
         try:
@@ -121,6 +122,7 @@ class ChipClassifierPipeline:
             return item
 
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] {e}")
             raise DropItem(f"ChipClassifierPipeline: {e}")
 
 
@@ -135,8 +137,8 @@ class SystemClassifierPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
         chip = adapter["chip"]
@@ -179,6 +181,7 @@ class SystemClassifierPipeline:
 
             return item
         except Exception as e:
+            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] {e}")
             raise DropItem(f"SystemClassifierPipeline: {e}")
 
 
@@ -240,11 +243,14 @@ class MacbookClassifyPipeline:
             return item
 
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
         item_id = self.get_item_id(adapter)
         if item_id is None:
+            spider.logger.error(
+                f"[{type(self).__name__}][{adapter['id']}] Item not found in database"
+            )
             raise DropItem(f"Item not found in database for {adapter['id']}")
 
         adapter["item_id"] = item_id.id
