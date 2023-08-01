@@ -34,7 +34,9 @@ class MarkAsClassifiedPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(f"[{type(self).__name__}] start processing item: {item['id']}")
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
+        )
 
         try:
             self.session.query(RawUsedItem).filter(
@@ -44,7 +46,9 @@ class MarkAsClassifiedPipeline:
             return item
 
         except Exception as e:
-            logging.error(e)
+            spider.logger.error(
+                f"[{type(self).__name__}][{adapter['id']}] {e.__class__.__name__}: {e}"
+            )
             self.session.rollback()
             raise DropItem(f"MarkAsClassifiedPipeline: {e}")
 
@@ -55,8 +59,8 @@ class CategoryClassifierPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
 
         raw_result: str = self.chain.run(
@@ -78,6 +82,9 @@ class CategoryClassifierPipeline:
             return IpadItem(**adapter) if category == "IPAD" else MacbookItem(**adapter)
 
         except Exception as e:
+            spider.logger.error(
+                f"[{type(self).__name__}][{adapter['id']}] {e.__class__.__name__}: {e}"
+            )
             raise DropItem(f"CategoryClassifierPipeline: {e}")
 
 
@@ -87,8 +94,8 @@ class UnusedClassifierPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
 
         title = adapter["title"]
@@ -128,8 +135,8 @@ class AppleCarePlusClassifierPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
         apple_care = False
         title = adapter["title"]
@@ -194,22 +201,31 @@ class HotDealClassifierPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
         priceInfo = self.get_average_price(item)
 
         if priceInfo is None:
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Can't find average price {adapter['id']}"
+            )
             raise DropItem(
                 f"HotDealClassifierPipeline: Can't find average price {adapter['id']}"
             )
 
         if priceInfo.average is None:
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Don't have trade data {adapter['id']}, {adapter}"
+            )
             raise DropItem(
                 f"HotDealClassifierPipeline: Don't have trade data {adapter['id']}, {adapter}"
             )
 
         if not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Not hot deal {adapter['id']}"
+            )
             raise DropItem(f"HotDealClassifierPipeline: Not hot deal {adapter['id']}")
 
         return item
@@ -240,11 +256,15 @@ class LabelingAlertPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
+
         entity = self.get_entity(adapter["id"])
         if entity is None:
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Can't find entity {adapter['id']}"
+            )
             raise DropItem(f"LabelingAlertPipeline: Can't find entity {adapter['id']}")
 
         model = adapter["model"]
@@ -256,6 +276,9 @@ class LabelingAlertPipeline:
                 source=source,
             )
 
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Need manual labeling {adapter['id']}"
+            )
             raise DropItem(
                 f"LabelingAlertPipeline: Need manual labeling {adapter['id']}"
             )
@@ -277,8 +300,8 @@ class PersistPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        logging.warning(
-            f"[{type(self).__name__}] start processing item: {adapter['id']}"
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
         )
         item_type = "P" if isinstance(item, IpadItem) else "M"
         try:
@@ -317,9 +340,13 @@ class PersistPipeline:
             )
 
             self.session.commit()
-            logging.warning(f"[PersisPipeline] update item: {adapter['id']}")
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['id']}] end processing item"
+            )
             return item
         except Exception as e:
-            logging.error(e)
             self.session.rollback()
+            spider.logger.error(
+                f"[{type(self).__name__}][{item['id']}] Can't update item: {adapter['id']}, {e}"
+            )
             raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")

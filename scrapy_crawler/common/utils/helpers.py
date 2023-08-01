@@ -1,7 +1,9 @@
+import logging
 from datetime import datetime, timedelta
 from io import BytesIO
 
 import requests
+import watchtower
 
 
 def get_local_timestring() -> str:
@@ -37,3 +39,15 @@ def has_forbidden_keyword(text: str) -> bool:
 
 def too_low_price(price: int) -> bool:
     return price < 200000
+
+
+def init_cloudwatch_logger(name: str):
+    console_handler = logging.StreamHandler()
+    cw_handler = watchtower.CloudWatchLogHandler(
+        log_group=f"scrapy-{name}",
+        stream_name=f"{get_local_timestring().replace(':', '-')}",
+    )
+
+    logger = logging.getLogger(name)
+    logger.addHandler(console_handler)
+    logger.addHandler(cw_handler)

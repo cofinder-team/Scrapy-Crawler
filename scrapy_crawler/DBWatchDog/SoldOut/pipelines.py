@@ -1,5 +1,3 @@
-import logging
-
 from itemadapter import ItemAdapter
 from sqlalchemy import true
 from sqlalchemy.orm import sessionmaker
@@ -21,6 +19,7 @@ class UpdateLastCrawledTime:
         self.session.close()
 
     def process_item(self, item, spider):
+        spider.logger.info(f"[{type(self).__name__}][{item['id']}] start process_item")
         adapter = ItemAdapter(item)
 
         try:
@@ -28,9 +27,13 @@ class UpdateLastCrawledTime:
                 {Deal.last_crawled: get_local_timestring()}
             )
             self.session.commit()
-            logging.warning(f"Update last_crawled time of {adapter['id']}")
+            spider.logger.info(
+                f"[{type(self).__name__}][{adapter['id']}] Update last_crawled"
+            )
         except Exception as e:
-            logging.error(e)
+            spider.logger.error(
+                f"[{type(self).__name__}][{adapter['id']}] {e.__class__.__name__}: {e}"
+            )
             self.session.rollback()
 
         return item
@@ -49,6 +52,7 @@ class UpdateSoldStatus:
         self.session.close()
 
     def process_item(self, item, spider):
+        spider.logger.info(f"[{type(self).__name__}][{item['id']}] start process_item")
         adapter = ItemAdapter(item)
 
         id, resp_status, prod_status = (
@@ -63,12 +67,16 @@ class UpdateSoldStatus:
                     {Deal.sold: true()}
                 )
                 self.session.commit()
-                logging.warning(f"Update status of {id} to SOLD_OUT")
+                spider.logger.info(f"[{type(self).__name__}][{id}] Update sold status")
             except Exception as e:
-                logging.error(e)
+                spider.logger.error(
+                    f"[{type(self).__name__}][{id}] {e.__class__.__name__}: {e}"
+                )
                 self.session.rollback()
 
         elif resp_status == 200:
-            logging.warning(f"Status of {id} to {prod_status}")
+            spider.logger.info(
+                f"[{type(self).__name__}][{id}] Update prod_status to {prod_status}"
+            )
 
         return item
