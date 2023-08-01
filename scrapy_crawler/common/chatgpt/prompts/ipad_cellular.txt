@@ -1,0 +1,14 @@
+Please determine if the product is Cellular model , by examining the {title} and {content}.
+
+Here is some steps, you can follow.
+STEP 1: READ THE CONTENT OF THE POST.
+STEP 2: LOOK FOR ANY CLUES THAT INDICATE WHETHER THE PRODUCT IS CELLULAR MODEL OR NOT.
+
+---
+Title : {title}
+Content : {content}
+Answer :
+---
+
+The answer must be either "TRUE" or "FALSE".
+You can answer "NONE" if you cannot determine the answer.

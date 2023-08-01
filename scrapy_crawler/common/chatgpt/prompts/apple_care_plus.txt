@@ -1,0 +1,15 @@
+Please determine if the product has "Apple Care Plus" program, by examining the {title} and {content}.
+
+Here is some steps, you can follow.
+STEP 1: READ THE TITLE AND CONTENT OF THE POST.
+STEP 2: FIND THE INFORMATION ABOUT "APPLE CARE PLUS" PROGRAM.
+STEP 3: DETERMINE IF THE PRODUCT HAS "APPLE CARE PLUS" PROGRAM.
+
+Test Data
+---
+Title : {title}
+Content : {content}
+Answer :
+---
+
+The answer must be either "TRUE" or "FALSE".
