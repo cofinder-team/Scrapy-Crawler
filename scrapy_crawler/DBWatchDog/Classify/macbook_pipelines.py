@@ -209,15 +209,6 @@ class MacbookClassifyPipeline:
         self.session.close()
 
     def get_item_id(self, adapter) -> Optional[ItemMacbook]:
-        if adapter["chip"] == "M1PRO":
-            adapter["chip"] = "M1Pro"
-        elif adapter["chip"] == "M1MAX":
-            adapter["chip"] = "M1Max"
-        elif adapter["chip"] == "M2PRO":
-            adapter["chip"] = "M2Pro"
-        elif adapter["chip"] == "M2MAX":
-            adapter["chip"] = "M2Max"
-
         try:
             model_id = self.map[adapter["model"]][adapter["screen_size"]]
             item_id = (
