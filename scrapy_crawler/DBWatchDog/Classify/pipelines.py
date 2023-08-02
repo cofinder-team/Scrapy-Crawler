@@ -350,6 +350,7 @@ class PersistPipeline:
                     writer=entity.writer,
                     image=entity.image,
                     apple_care=adapter["apple_care_plus"],
+                    condition="U" if entity.unused else "S",
                 )
             )
 
