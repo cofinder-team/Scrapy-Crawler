@@ -6,6 +6,7 @@ SPIDER_MODULES = [
     "scrapy_crawler.Bungae.TotalSearch.spiders",
     "scrapy_crawler.DBWatchDog.SoldOut.spiders",
     "scrapy_crawler.DBWatchDog.Classify.spiders",
+    "scrapy_crawler.DBWatchDog.DailyScheduler.spiders.PriceUpdateSpider",
 ]
 NEWSPIDER_MODULE = "scrapy_crawler.Joonggonara.TotalSearch.spiders"
 
