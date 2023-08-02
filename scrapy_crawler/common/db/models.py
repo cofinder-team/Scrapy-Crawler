@@ -1,7 +1,7 @@
 import datetime
 from typing import Any
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -77,6 +77,7 @@ class Deal(Base):
     content = Column("content", String)
     apple_care = Column("apple_care", Boolean)
     deleted_at = Column("deleted_at", String)
+    condition = Column("condition", Enum("U", "S", "A"))
 
 
 class ItemIpad(Base):
