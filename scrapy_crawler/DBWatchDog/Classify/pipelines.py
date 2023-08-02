@@ -207,23 +207,9 @@ class HotDealClassifierPipeline:
         )
         priceInfo = self.get_average_price(item)
 
-        if priceInfo is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Can't find average price {adapter['id']}"
-            )
-            raise DropItem(
-                f"HotDealClassifierPipeline: Can't find average price {adapter['id']}"
-            )
-
-        if priceInfo.average is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Don't have trade data {adapter['id']}, {adapter}"
-            )
-            raise DropItem(
-                f"HotDealClassifierPipeline: Don't have trade data {adapter['id']}, {adapter}"
-            )
-
-        if not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
+        if priceInfo is None or priceInfo.average is None:
+            return item
+        elif not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
             spider.logger.error(
                 f"[{type(self).__name__}][{item['id']}] Not hot deal {adapter['id']}"
             )
