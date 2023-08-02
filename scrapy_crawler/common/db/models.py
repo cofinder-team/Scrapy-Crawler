@@ -54,6 +54,12 @@ class ItemMacbook(Base):
 
 
 class Deal(Base):
+    def __repr__(self):
+        return (
+            f"<Deal(id={self.id}, type={self.type}, "
+            f"item_id={self.item_id}, price={self.price}, unused={self.unused}>"
+        )
+
     __tablename__ = "deal"
     id = Column(Integer, primary_key=True)
     type = Column("type", ForeignKey("item.type"))
@@ -78,6 +84,22 @@ class Deal(Base):
     apple_care = Column("apple_care", Boolean)
     deleted_at = Column("deleted_at", String)
     condition = Column("condition", Enum("U", "S", "A"))
+
+
+class Trade(Base):
+    __tablename__ = "trade"
+    id = Column(Integer, primary_key=True)
+    type = Column("type", ForeignKey("item.type"))
+    item_id = Column("item_id", ForeignKey("item.id"))
+    date = Column("date", String)
+    price = Column("price", Integer)
+    unused = Column("unused", Boolean, default=False)
+    care = Column("care", Boolean, default=False)
+    source = Column("source", String)
+    url = Column("url", String)
+    title = Column("title", String)
+    content = Column("content", String)
+    writer = Column("writer", String)
 
 
 class ItemIpad(Base):
