@@ -271,7 +271,11 @@ class LabelingAlertPipeline:
         model = adapter["model"]
         source = entity.source
 
-        if model == "IPADPRO" or source != "중고나라":
+        if (
+            model == "IPADPRO"
+            or source != "중고나라"
+            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+        ):
             self.slack_bot.post_hotdeal_message(
                 console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
                 source=source,
