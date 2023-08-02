@@ -17,6 +17,7 @@ from scrapy_crawler.common.chatgpt.chains import (
 from scrapy_crawler.common.db import RawUsedItem, get_engine
 from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
+from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.DBWatchDog.items import IpadItem, MacbookItem
 
 log_group_name = "scrapy-chatgpt"
@@ -321,6 +322,17 @@ class PersistPipeline:
                 self.session.query(RawUsedItem)
                 .filter(RawUsedItem.id == adapter["id"])
                 .first()
+            )
+
+            # Delete all duplicated deals
+            self.session.query(Deal).filter(Deal.item_id == entity.item_id).filter(
+                Deal.type == item_type
+            ).filter(Deal.unused == entity.unused).filter(
+                Deal.writer == entity.writer
+            ).filter(
+                Deal.source == entity.source
+            ).update(
+                {Deal.deleted_at: get_local_timestring()}
             )
 
             # Insert to Deal
