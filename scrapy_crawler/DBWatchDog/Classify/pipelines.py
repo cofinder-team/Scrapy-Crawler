@@ -207,23 +207,9 @@ class HotDealClassifierPipeline:
         )
         priceInfo = self.get_average_price(item)
 
-        if priceInfo is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Can't find average price {adapter['id']}"
-            )
-            raise DropItem(
-                f"HotDealClassifierPipeline: Can't find average price {adapter['id']}"
-            )
-
-        if priceInfo.average is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Don't have trade data {adapter['id']}, {adapter}"
-            )
-            raise DropItem(
-                f"HotDealClassifierPipeline: Don't have trade data {adapter['id']}, {adapter}"
-            )
-
-        if not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
+        if priceInfo is None or priceInfo.average is None:
+            return item
+        elif not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
             spider.logger.error(
                 f"[{type(self).__name__}][{item['id']}] Not hot deal {adapter['id']}"
             )
@@ -271,7 +257,11 @@ class LabelingAlertPipeline:
         model = adapter["model"]
         source = entity.source
 
-        if model == "IPADPRO" or source != "중고나라":
+        if (
+            model == "IPADPRO"
+            or source != "중고나라"
+            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+        ):
             self.slack_bot.post_hotdeal_message(
                 console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
                 source=source,
