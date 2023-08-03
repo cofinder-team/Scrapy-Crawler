@@ -129,8 +129,8 @@ class GenerationClassifierPipeline:
                 in self.generation_map[adapter["model"]][adapter["screen_size"]]
             ):
                 adapter["generation"] = generation
-                return item
 
+            return item
         except Exception as e:
             raise DropItem(f"GenerationClassifierPipeline: {e}")
 

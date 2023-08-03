@@ -1,4 +1,3 @@
-import logging
 import re
 from datetime import datetime
 from typing import Optional
@@ -178,62 +177,6 @@ class HotDealClassifierPipeline:
         return item
 
 
-class LabelingAlertPipeline:
-    name = "LabelingAlertPipeline"
-
-    def __init__(self):
-        self.slack_bot = LabelingSlackBot()
-        self.session = None
-
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def get_entity(self, id: int) -> Optional[RawUsedItem]:
-        try:
-            entity = (
-                self.session.query(RawUsedItem).filter(RawUsedItem.id == id).first()
-            )
-            return entity
-        except Exception as e:
-            logging.error(e)
-            return None
-
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        spider.logger.info(
-            f"[{type(self).__name__}][{item['id']}] start processing item"
-        )
-
-        entity = self.get_entity(adapter["id"])
-        if entity is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Can't find entity {adapter['id']}"
-            )
-            raise DropItem(f"LabelingAlertPipeline: Can't find entity {adapter['id']}")
-
-        model = adapter["model"]
-        source = entity.source
-
-        if (
-            model == "IPADPRO"
-            or source != "중고나라"
-            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
-        ):
-            self.slack_bot.post_hotdeal_message(
-                console_url=f"https://dev.macguider.io/deals/admin/{adapter['id']}",
-                source=source,
-            )
-
-            raise DropItem(
-                f"LabelingAlertPipeline: Need manual labeling {adapter['id']}"
-            )
-
-        return item
-
-
 class PersistPipeline:
     name = "PersistPipeline"
 
@@ -309,3 +252,44 @@ class PersistPipeline:
         except Exception as e:
             self.session.rollback()
             raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")
+
+
+class LabelingAlertPipeline:
+    name = "LabelingAlertPipeline"
+
+    def __init__(self):
+        self.slack_bot = LabelingSlackBot()
+        self.session = None
+
+    def open_spider(self, spider):
+        self.session = sessionmaker(bind=get_engine())()
+
+    def close_spider(self, spider):
+        self.session.close()
+
+    def get_entity(self, url: str) -> Deal:
+        entity = self.session.query(Deal).filter(Deal.url == url).first()
+        return entity
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
+        )
+
+        entity = self.get_entity(adapter["url"])
+
+        model = adapter["model"]
+        source = entity.source
+
+        if (
+            model == "IPADPRO"
+            or source != "중고나라"
+            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+        ):
+            self.slack_bot.post_hotdeal_message(
+                console_url=f"https://dev.macguider.io/deals/report/{entity.id}",
+                source=source,
+            )
+
+        return item
