@@ -1,9 +1,10 @@
+import logging
 import re
 from datetime import datetime
 from typing import Optional
 
 from itemadapter import ItemAdapter
-from scrapy.exceptions import DropItem
+from scrapy.exceptions import DropItem, NotSupported
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
@@ -16,6 +17,7 @@ from scrapy_crawler.common.db import RawUsedItem, get_engine
 from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
+from scrapy_crawler.common.utils.constants import CONSOLE_URL
 from scrapy_crawler.DBWatchDog.items import IpadItem, MacbookItem
 
 log_group_name = "scrapy-chatgpt"
@@ -177,8 +179,88 @@ class HotDealClassifierPipeline:
         return item
 
 
-class PersistPipeline:
-    name = "PersistPipeline"
+class PersistRawUsedItemPipeline:
+    name = "PersistRawUsedItemPipeline"
+
+    def __init__(self):
+        self.session = None
+
+    def open_spider(self, spider):
+        self.session = sessionmaker(bind=get_engine())()
+
+    def close_spider(self, spider):
+        self.session.close()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
+        )
+        try:
+            item_type = "P" if isinstance(item, IpadItem) else "M"
+            item_id = adapter["item_id"]
+            unused = adapter["unused"]
+
+            logging.error(
+                f"[{type(self).__name__}][{item['id']}] item_type: {item_type}, item_id: {item_id}, unused: {unused}"
+            )
+
+            self.session.query(RawUsedItem).filter(
+                RawUsedItem.id == adapter["id"]
+            ).update(
+                {
+                    RawUsedItem.type: item_type,
+                    RawUsedItem.item_id: adapter["item_id"],
+                    RawUsedItem.unused: adapter["unused"],
+                }
+            )
+
+            self.session.commit()
+            return item
+        except Exception as e:
+            self.session.rollback()
+            raise DropItem(f"[{type(self).__name__}][{item['id']}] {e}")
+
+
+class LabelingAlertPipeline:
+    name = "LabelingAlertPipeline"
+
+    def __init__(self):
+        self.slack_bot = LabelingSlackBot()
+        self.session = None
+
+    def open_spider(self, spider):
+        self.session = sessionmaker(bind=get_engine())()
+
+    def close_spider(self, spider):
+        self.session.close()
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
+        )
+
+        model = adapter["model"]
+        source = adapter["source"]
+
+        if (
+            model == "IPADPRO"
+            or source != "중고나라"
+            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+        ):
+            self.slack_bot.post_hotdeal_message(
+                console_url=CONSOLE_URL % adapter["id"],
+                source=source,
+            )
+
+            raise NotSupported("Stop processing item")
+
+        return item
+
+
+class PersistDealPipeline:
+    name = "PersistDealPipeline"
 
     def __init__(self):
         self.session = None
@@ -196,17 +278,6 @@ class PersistPipeline:
         )
         item_type = "P" if isinstance(item, IpadItem) else "M"
         try:
-            # Update RawUsedItem
-            self.session.query(RawUsedItem).filter(
-                RawUsedItem.id == adapter["id"]
-            ).update(
-                {
-                    RawUsedItem.type: item_type,
-                    RawUsedItem.item_id: adapter["item_id"],
-                    RawUsedItem.unused: adapter["unused"],
-                }
-            )
-
             # Get RawUsedItem
             entity: RawUsedItem = (
                 self.session.query(RawUsedItem)
@@ -254,42 +325,43 @@ class PersistPipeline:
             raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")
 
 
-class LabelingAlertPipeline:
-    name = "LabelingAlertPipeline"
-
-    def __init__(self):
-        self.slack_bot = LabelingSlackBot()
-        self.session = None
-
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def get_entity(self, url: str) -> Deal:
-        entity = self.session.query(Deal).filter(Deal.url == url).first()
-        return entity
-
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        spider.logger.info(
-            f"[{type(self).__name__}][{item['id']}] start processing item"
-        )
-
-        entity = self.get_entity(adapter["url"])
-
-        model = adapter["model"]
-        source = entity.source
-
-        if (
-            model == "IPADPRO"
-            or source != "중고나라"
-            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
-        ):
-            self.slack_bot.post_hotdeal_message(
-                console_url=f"https://dev.macguider.io/deals/report/{entity.id}",
-                source=source,
-            )
-
-        return item
+# For Deal table
+# class LabelingAlertPipeline:
+#     name = "LabelingAlertPipeline"
+#
+#     def __init__(self):
+#         self.slack_bot = LabelingSlackBot()
+#         self.session = None
+#
+#     def open_spider(self, spider):
+#         self.session = sessionmaker(bind=get_engine())()
+#
+#     def close_spider(self, spider):
+#         self.session.close()
+#
+#     def get_entity(self, url: str) -> Deal:
+#         entity = self.session.query(Deal).filter(Deal.url == url).first()
+#         return entity
+#
+#     def process_item(self, item, spider):
+#         adapter = ItemAdapter(item)
+#         spider.logger.info(
+#             f"[{type(self).__name__}][{item['id']}] start processing item"
+#         )
+#
+#         entity = self.get_entity(adapter["url"])
+#
+#         model = adapter["model"]
+#         source = entity.source
+#
+#         if (
+#             model == "IPADPRO"
+#             or source != "중고나라"
+#             or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+#         ):
+#             self.slack_bot.post_hotdeal_message(
+#                 console_url=f"https://dev.macguider.io/deals/report/{entity.id}",
+#                 source=source,
+#             )
+#
+#         return item
