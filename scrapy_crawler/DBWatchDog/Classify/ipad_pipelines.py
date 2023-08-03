@@ -70,7 +70,6 @@ class ModelClassifierPipeline:
 
             return item
         except Exception as e:
-            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"ModelClassifierPipeline: {e}")
 
 
@@ -133,7 +132,6 @@ class GenerationClassifierPipeline:
                 return item
 
         except Exception as e:
-            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"GenerationClassifierPipeline: {e}")
 
 
@@ -213,7 +211,6 @@ class StorageClassifierPipeline:
 
             return item
         except Exception as e:
-            spider.logger.error(f"[{type(self).__name__}][{adapter['id']}] error: {e}")
             raise DropItem(f"StorageClassifierPipeline: {e}")
 
 
@@ -319,9 +316,6 @@ class IpadClassifyPipeline:
 
         ipadItem = self.get_item_id(adapter)
         if ipadItem is None:
-            spider.logger.error(
-                f"[{type(self).__name__}][{adapter['id']}] item not found in database"
-            )
             raise DropItem(f"Item not found in database : {adapter['id']}")
         adapter["item_id"] = ipadItem.id
 

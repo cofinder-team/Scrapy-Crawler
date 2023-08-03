@@ -5,7 +5,6 @@ from typing import Optional
 
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
-from sqlalchemy import true
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
@@ -21,37 +20,6 @@ from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.DBWatchDog.items import IpadItem, MacbookItem
 
 log_group_name = "scrapy-chatgpt"
-
-
-class MarkAsClassifiedPipeline:
-    def __init__(self):
-        self.session = None
-
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        spider.logger.info(
-            f"[{type(self).__name__}][{item['id']}] start processing item"
-        )
-
-        try:
-            self.session.query(RawUsedItem).filter(
-                RawUsedItem.url == adapter["url"]
-            ).update({RawUsedItem.classified: true()})
-            self.session.commit()
-            return item
-
-        except Exception as e:
-            spider.logger.error(
-                f"[{type(self).__name__}][{adapter['id']}] {e.__class__.__name__}: {e}"
-            )
-            self.session.rollback()
-            raise DropItem(f"MarkAsClassifiedPipeline: {e}")
 
 
 class CategoryClassifierPipeline:
@@ -76,16 +44,12 @@ class CategoryClassifierPipeline:
         ).upper()
 
         result: re.Match[bytes] | None = re.search(r"IPAD|MACBOOK", raw_result)
-
         try:
             category = result.group().upper()
 
             return IpadItem(**adapter) if category == "IPAD" else MacbookItem(**adapter)
 
         except Exception as e:
-            spider.logger.error(
-                f"[{type(self).__name__}][{adapter['id']}] {e.__class__.__name__}: {e}"
-            )
             raise DropItem(f"CategoryClassifierPipeline: {e}")
 
 
@@ -195,8 +159,7 @@ class HotDealClassifierPipeline:
                 .first()
             )
             return entity
-        except Exception as e:
-            logging.error(e)
+        except Exception:
             self.session.rollback()
             return None
 
@@ -210,9 +173,6 @@ class HotDealClassifierPipeline:
         if priceInfo is None or priceInfo.average is None:
             return item
         elif not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Not hot deal {adapter['id']}"
-            )
             raise DropItem(f"HotDealClassifierPipeline: Not hot deal {adapter['id']}")
 
         return item
@@ -267,9 +227,6 @@ class LabelingAlertPipeline:
                 source=source,
             )
 
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Need manual labeling {adapter['id']}"
-            )
             raise DropItem(
                 f"LabelingAlertPipeline: Need manual labeling {adapter['id']}"
             )
@@ -351,7 +308,4 @@ class PersistPipeline:
             return item
         except Exception as e:
             self.session.rollback()
-            spider.logger.error(
-                f"[{type(self).__name__}][{item['id']}] Can't update item: {adapter['id']}, {e}"
-            )
             raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")

@@ -2,7 +2,9 @@ import datetime
 from datetime import timedelta
 
 import scrapy
-from sqlalchemy import false, null
+from scrapy import signals
+from scrapy.exceptions import DropItem
+from sqlalchemy import false, null, true
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
@@ -15,7 +17,6 @@ class ClassifyDog(scrapy.Spider):
     name = "ClassifyDog"
     custom_settings = {
         "ITEM_PIPELINES": {
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.MarkAsClassifiedPipeline": 1,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.CategoryClassifierPipeline": 2,
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.ModelClassifierPipeline": 3,
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.ChipClassifierPipeline": 4,
@@ -38,6 +39,25 @@ class ClassifyDog(scrapy.Spider):
         super().__init__(**kwargs)
         init_cloudwatch_logger(self.name)
         self.session = sessionmaker(bind=get_engine())()
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+
+        crawler.signals.connect(spider.item_dropped, signal=signals.item_dropped)
+        return spider
+
+    def item_dropped(self, item, response, exception: DropItem, spider):
+        self.logger.info(
+            f"[{type(self).__name__}][{item['id']}] item dropped with Error msg : {exception}"
+        )
+        id = item["id"]
+        self.session.query(RawUsedItem).filter(RawUsedItem.id == id).update(
+            {
+                RawUsedItem.classified: true(),
+            }
+        )
+        self.session.commit()
 
     def get_unclassified_items(self) -> list[UnClassifiedItem]:
         item = (
