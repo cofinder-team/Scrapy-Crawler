@@ -4,7 +4,7 @@ def hotdeal_message_template(url: str, source: str):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"[{source}] <{url}|{'(신)웹 콘솔'}>",
+                "text": f"[{source}] <{url}|{'(구)웹 콘솔'}>",
             },
         },
     ]
