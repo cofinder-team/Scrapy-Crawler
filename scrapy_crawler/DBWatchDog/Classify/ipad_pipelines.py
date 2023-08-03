@@ -130,7 +130,10 @@ class GenerationClassifierPipeline:
             ):
                 adapter["generation"] = generation
 
-            return item
+            else:
+                raise DropItem(
+                    f"GenerationClassifierPipeline: {adapter['id']} generation not in generation map"
+                )
         except Exception as e:
             raise DropItem(f"GenerationClassifierPipeline: {e}")
 
