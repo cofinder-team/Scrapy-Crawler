@@ -1,27 +1,10 @@
-def dropped_message_template(id: str, title: str, source: str, url: str, message: str):
-    return [
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f"해당 게시물은 처리되지 않았습니다.\n사유 : {message}"},
-        },
-        {
-            "type": "section",
-            "fields": [
-                {"type": "mrkdwn", "text": f"*게시글 ID:*\n{id}"},
-                {"type": "mrkdwn", "text": f"*게시글 제목:*\n{title}"},
-                {"type": "mrkdwn", "text": f"*게시글 주소:*\n<{url}|{source}>"},
-            ],
-        },
-    ]
-
-
 def hotdeal_message_template(url: str, source: str):
     return [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"핫딜 :fire:\n출처 : {source}\nCONSOLE: <{url}|{'웹 콘솔'}>",
+                "text": f"[{source}] <{url}|{'(신)웹 콘솔'}>",
             },
         },
     ]
