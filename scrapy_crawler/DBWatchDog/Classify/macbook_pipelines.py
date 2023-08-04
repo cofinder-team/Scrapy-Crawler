@@ -178,7 +178,7 @@ class SystemClassifierPipeline:
             adapter["ram"] = re.findall(r"RAM=(\d+)", predict)[0]
             adapter["ssd"] = re.findall(r"SSD=(\d+)", predict)[0]
 
-            if adapter["ssd"] <= 10:
+            if adapter["ssd"] <= "10":
                 adapter["ssd"] += "TB"
             else:
                 adapter["ssd"] += "GB"
