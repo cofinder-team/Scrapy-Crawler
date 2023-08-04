@@ -241,11 +241,13 @@ class LabelingAlertPipeline:
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
 
-        model = adapter["model"]
         source = adapter["source"]
+        title = adapter["title"]
+        content = adapter["content"]
 
-        if model == "IPADPRO" or re.findall(
-            "미개봉|새제품", adapter["title"] + adapter["content"]
+        if title.count("세대") > 2 or re.findall(
+            "미개봉|새제품",
+            title + content,
         ):
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
