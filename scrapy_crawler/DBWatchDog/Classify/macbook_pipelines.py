@@ -175,10 +175,13 @@ class SystemClassifierPipeline:
                 .replace(" ", "")
             )
 
-            adapter["ram"] = re.findall(r"RAM=(\d+)GB", predict)[0]
-            adapter["ssd"] = re.findall(r"SSD=(\S+)", predict)[0]
-            if adapter["ssd"] == "1024GB" or adapter["ssd"] == "1024":
-                adapter["ssd"] = "1TB"
+            adapter["ram"] = re.findall(r"RAM=(\d+)", predict)[0]
+            adapter["ssd"] = re.findall(r"SSD=(\d+)", predict)[0]
+
+            if adapter["ssd"] <= 10:
+                adapter["ssd"] += "TB"
+            else:
+                adapter["ssd"] += "GB"
 
             return item
         except Exception as e:
