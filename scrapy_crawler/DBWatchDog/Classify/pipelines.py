@@ -245,7 +245,7 @@ class LabelingAlertPipeline:
         title = adapter["title"]
         content = adapter["content"]
 
-        if title.count("세대") > 2 or re.findall(
+        if title.count("세대") >= 2 or re.findall(
             "미개봉|새제품",
             title + content,
         ):
