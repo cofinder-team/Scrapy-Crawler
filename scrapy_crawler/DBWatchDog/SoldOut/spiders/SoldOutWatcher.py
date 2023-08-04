@@ -5,11 +5,12 @@ import scrapy
 from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
+from scrapy_crawler.Bungae.metadata import article
 from scrapy_crawler.common.db import Deal, get_engine
+from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
-from scrapy_crawler.Joonggonara.utils.constants import ARTICLE_API_URL
 
 
 class SoldOutWatcher(scrapy.Spider):
@@ -37,18 +38,27 @@ class SoldOutWatcher(scrapy.Spider):
         )
         return item.all()
 
+    def get_article_url(self, item: Type[Deal]) -> str:
+        if item.source == "중고나라":
+            return Joonggonara.ARTICLE_API_URL % item.url.split("/")[-1]
+        else:
+            return BunJang.ARTICLE_API_URL % item.url.split("/")[-1]
+
     def start_requests(self):
         unsold_items = self.get_unsold_items()
 
         for item in unsold_items:
             id = item.id
-            url = item.url.split("/")[-1]
-            request_url = ARTICLE_API_URL % url
+            request_url = self.get_article_url(item)
             yield scrapy.Request(
                 url=request_url,
                 callback=self.parse,
                 errback=lambda failure: self.logger.warn(failure),
-                meta={"item_id": id, "handle_httpstatus_list": [200, 404]},
+                meta={
+                    "item_id": id,
+                    "handle_httpstatus_list": [200, 404],
+                    "source": item.source,
+                },
             )
 
     def parse(self, response, **kwargs):
@@ -56,13 +66,26 @@ class SoldOutWatcher(scrapy.Spider):
             yield ArticleStatus(
                 id=response.meta["item_id"], resp_status=404, prod_status="SOLD_OUT"
             )
+
         else:
-            root = ArticleRoot.from_dict(json.loads(response.text))
-            id = response.meta["item_id"]
+            item_id = response.meta["item_id"]
+            source = response.meta["source"]
             resp_status = response.status
-            prod_status = root.result.saleInfo.saleStatus if root.result else None
-            price = root.result.saleInfo.price if root.result else 0
+
+            if source == "중고나라":
+                root = ArticleRoot.from_dict(json.loads(response.text))
+                prod_status = (
+                    root.result.saleInfo.saleStatus if root.result else "SOLD_OUT"
+                )
+                price = root.result.saleInfo.price if root.result else 0
+            else:
+                root = article.ArticleRoot.from_dict(json.loads(response.text))
+                prod_status = root.data.product.saleStatus if root.data else "SOLD_OUT"
+                price = root.data.product.price if root.data else 0
 
             yield ArticleStatus(
-                id=id, price=price, resp_status=resp_status, prod_status=prod_status
+                id=item_id,
+                price=price,
+                resp_status=resp_status,
+                prod_status=prod_status,
             )
