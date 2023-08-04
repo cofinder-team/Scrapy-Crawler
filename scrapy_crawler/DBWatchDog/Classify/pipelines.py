@@ -44,7 +44,7 @@ class CategoryClassifierPipeline:
             ],
         ).upper()
 
-        result: re.Match[bytes] | None = re.search(r"IPAD|MACBOOK", raw_result)
+        result: re.Match[bytes] | None = re.search(r"IPAD|MAC", raw_result)
         try:
             category = result.group().upper()
 
