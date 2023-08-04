@@ -171,7 +171,7 @@ class HotDealClassifierPipeline:
         )
         priceInfo = self.get_average_price(item)
 
-        if priceInfo is None or priceInfo.average is None:
+        if priceInfo is None or priceInfo.average is None or priceInfo.price_20 is None:
             return item
         elif not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
             raise DropItem(f"HotDealClassifierPipeline: Not hot deal {adapter['id']}")
