@@ -245,10 +245,9 @@ class LabelingAlertPipeline:
         title = adapter["title"]
         content = adapter["content"]
 
-        if title.count("세대") >= 2 or re.findall(
-            "미개봉|새제품",
-            title + content,
-        ):
+        pattern = re.compile(r"\d세대")
+        keywords = set(pattern.findall(title + content))
+        if len(keywords) > 1:
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
                 source=source,
