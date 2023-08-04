@@ -244,10 +244,8 @@ class LabelingAlertPipeline:
         model = adapter["model"]
         source = adapter["source"]
 
-        if (
-            model == "IPADPRO"
-            or source != "중고나라"
-            or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
+        if model == "IPADPRO" or re.findall(
+            "미개봉|새제품", adapter["title"] + adapter["content"]
         ):
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
