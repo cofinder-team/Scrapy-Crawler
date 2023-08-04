@@ -5,15 +5,11 @@ from urllib import parse
 import scrapy
 
 from scrapy_crawler.common.utils import to_local_timestring
+from scrapy_crawler.common.utils.constants import Joonggonara
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.metadata.total_search import TotalSearchRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleItem
-from scrapy_crawler.Joonggonara.utils.constants import (
-    ARTICLE_API_URL,
-    ARTICLE_URL,
-    TOTAL_SEARCH_FETCH_URL,
-)
 from scrapy_crawler.Joonggonara.utils.helpers import is_official_seller, is_selling
 
 
@@ -36,7 +32,7 @@ class JgKeywordSpider(scrapy.Spider):
     def start_requests(self):
         self.logger.info(f"Start crawling keyword: {self.keyword}")
         yield scrapy.Request(
-            TOTAL_SEARCH_FETCH_URL % parse.quote(self.keyword), self.parse
+            Joonggonara.TOTAL_SEARCH_FETCH_URL % parse.quote(self.keyword), self.parse
         )
 
     def parse(self, response):
@@ -55,9 +51,9 @@ class JgKeywordSpider(scrapy.Spider):
         self.logger.info(f"Found {len(target_articles)} articles")
         for article in target_articles:
             yield scrapy.Request(
-                ARTICLE_API_URL % article.articleId,
+                Joonggonara.ARTICLE_API_URL % article.articleId,
                 callback=self.parse_article,
-                meta={"article_url": ARTICLE_URL % article.articleId},
+                meta={"article_url": Joonggonara.ARTICLE_URL % article.articleId},
             )
 
     def parse_article(self, response):

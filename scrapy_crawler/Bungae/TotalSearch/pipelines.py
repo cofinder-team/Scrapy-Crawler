@@ -1,8 +1,8 @@
 from scrapy.exceptions import DropItem
 from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.Bungae.utils.constants import ARTICLE_URL
 from scrapy_crawler.common.db import RawUsedItem, get_engine
+from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.helpers import (
     has_forbidden_keyword,
     save_image_from_url,
@@ -26,7 +26,7 @@ class DuplicateFilterPipeline:
         spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
         entity = (
             self.session.query(RawUsedItem)
-            .filter(RawUsedItem.url == ARTICLE_URL % str(item["pid"]))
+            .filter(RawUsedItem.url == BunJang.ARTICLE_URL % str(item["pid"]))
             .first()
         )
 
@@ -81,7 +81,7 @@ class PostgresExportPipeline:
                     price=item["price"],
                     date=item["date"],
                     source=item["source"],
-                    url=ARTICLE_URL % str(item["pid"]),
+                    url=BunJang.ARTICLE_URL % str(item["pid"]),
                     img_url=item["img_url"],
                     image=save_image_from_url(item["img_url"]).getvalue(),
                     raw_json=item["raw_json"],
