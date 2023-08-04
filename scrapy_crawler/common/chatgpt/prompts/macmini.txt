@@ -1,4 +1,4 @@
-Classify CPU/GPU core and RAM/SSD capacity by examining the *title* and *content*.
+Classify Chip and CPU/GPU core by examining the *title* and *content*.
 
 Here are some steps you can follow.
 
