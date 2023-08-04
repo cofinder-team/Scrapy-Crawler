@@ -38,7 +38,7 @@ class BgKeywordSpider(scrapy.Spider):
 
         for article in articles:
             yield scrapy.Request(
-                BunJang.ARTICLE_URL % article.pid,
+                BunJang.ARTICLE_API_URL % article.pid,
                 callback=self.parse_article,
             )
 
