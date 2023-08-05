@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from typing import List
 
 import scrapy
@@ -30,7 +29,6 @@ class PriceUpdateSpider(scrapy.Spider):
             .filter(Deal.sold == true())
             .filter(Deal.deleted_at == null())
             .filter(Deal.condition == "S")
-            .filter(Deal.last_crawled > datetime.now() - timedelta(days=1))
         )
         return item.all()
 
