@@ -33,7 +33,7 @@ class InitCloudwatchLogger:
         console_handler = logging.StreamHandler()
         cw_handler = watchtower.CloudWatchLogHandler(
             log_group="scrapy-chatgpt",
-            stream_name=item["id"],
+            stream_name=f"{item['id']}",
         )
 
         logger.addHandler(console_handler)
