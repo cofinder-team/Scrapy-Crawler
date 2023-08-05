@@ -1,3 +1,5 @@
+from typing import Type
+
 import scrapy
 from scrapy import signals
 from scrapy.exceptions import DropItem
@@ -56,7 +58,7 @@ class ClassifyDog(scrapy.Spider):
         )
         self.session.commit()
 
-    def get_unclassified_items(self) -> list[UnClassifiedItem]:
+    def get_unclassified_items(self) -> list[Type[RawUsedItem]]:
         item = (
             self.session.query(RawUsedItem)
             .filter(RawUsedItem.classified == false())
