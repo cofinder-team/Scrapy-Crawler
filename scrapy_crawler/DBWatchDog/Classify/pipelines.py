@@ -235,7 +235,7 @@ class LabelingAlertPipeline:
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
                 source=adapter["source"],
-                msg="여러 세대 수 등장, 검증 필요",
+                msg="세대수 검증(여러 세대 존재)",
             )
 
             raise NotSupported("Stop processing item")
