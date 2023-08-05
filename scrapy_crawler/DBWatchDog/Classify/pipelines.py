@@ -1,7 +1,5 @@
 import logging
 import re
-from datetime import datetime
-from typing import Optional
 
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem, NotSupported
@@ -14,7 +12,7 @@ from scrapy_crawler.common.chatgpt.chains import (
     unused_chain,
 )
 from scrapy_crawler.common.db import RawUsedItem, get_engine
-from scrapy_crawler.common.db.models import Deal, ViewTrade
+from scrapy_crawler.common.db.models import Deal
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL
@@ -129,52 +127,6 @@ class AppleCarePlusClassifierPipeline:
                 apple_care = False
 
         adapter["apple_care_plus"] = apple_care
-
-        return item
-
-
-class HotDealClassifierPipeline:
-    name = "HotDealClassifierPipeline"
-
-    def __init__(self):
-        self.session = None
-
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def get_average_price(self, item) -> Optional[ViewTrade]:
-        try:
-            type = "P" if isinstance(item, IpadItem) else "M"
-            entity = (
-                self.session.query(ViewTrade)
-                .filter(ViewTrade.id == item["item_id"])
-                .filter(ViewTrade.source == item["source"])
-                .filter(ViewTrade.type == type)
-                .filter(ViewTrade.unused == item["unused"])
-                .filter(
-                    ViewTrade.date == datetime.date(datetime.now()).strftime("%Y-%m-%d")
-                )
-                .first()
-            )
-            return entity
-        except Exception:
-            self.session.rollback()
-            return None
-
-    def process_item(self, item, spider):
-        adapter = ItemAdapter(item)
-        spider.logger.info(
-            f"[{type(self).__name__}][{item['id']}] start processing item"
-        )
-        priceInfo = self.get_average_price(item)
-
-        if priceInfo is None or priceInfo.average is None or priceInfo.price_20 is None:
-            return item
-        elif not (priceInfo.average * 0.8 <= adapter["price"] <= priceInfo.price_20):
-            raise DropItem(f"HotDealClassifierPipeline: Not hot deal {adapter['id']}")
 
         return item
 

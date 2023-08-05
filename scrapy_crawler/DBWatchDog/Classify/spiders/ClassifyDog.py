@@ -26,10 +26,9 @@ class ClassifyDog(scrapy.Spider):
             "scrapy_crawler.DBWatchDog.Classify.pipelines.AppleCarePlusClassifierPipeline": 11,
             "scrapy_crawler.DBWatchDog.Classify.ipad_pipelines.IpadClassifyPipeline": 12,
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.MacbookClassifyPipeline": 13,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.HotDealClassifierPipeline": 14,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistRawUsedItemPipeline": 15,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.LabelingAlertPipeline": 16,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistDealPipeline": 17,
+            "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistRawUsedItemPipeline": 14,
+            "scrapy_crawler.DBWatchDog.Classify.pipelines.LabelingAlertPipeline": 15,
+            "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistDealPipeline": 16,
         },
     }
 
