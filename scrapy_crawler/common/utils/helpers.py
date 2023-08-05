@@ -28,7 +28,7 @@ def save_image_from_url(image_url) -> BytesIO:
 
 
 def has_forbidden_keyword(text: str) -> bool:
-    forbidden_words = ["매입", "삽니다", "파트너", "할인"]
+    forbidden_words = ["매입", "삽니다", "파트너", "할인", "행사"]
 
     for word in forbidden_words:
         if word in text:
