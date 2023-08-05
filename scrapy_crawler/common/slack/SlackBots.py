@@ -14,15 +14,15 @@ class LabelingSlackBot:
         self.slack_channel = self.settings.get("SLACK_CHANNEL_LABELING")
         self.slack_client = WebClient(token=self.slack_token)
 
-    def post_hotdeal_message(self, console_url, source):
+    def post_hotdeal_message(self, console_url, source, msg: str = ""):
         result = self.slack_client.chat_postMessage(
             channel="hotdeal-alert",
-            blocks=hotdeal_message_template(console_url, source),
+            blocks=hotdeal_message_template(console_url, source, msg),
         )
 
         return result
 
-    def post_soldout_message(self, url):
+    def post_soldout_message(self, url, msg: str = ""):
         result = self.slack_client.chat_postMessage(
             channel="soldout-alert", blocks=soldout_message_template(url)
         )

@@ -26,4 +26,4 @@ class ArticleStatus(scrapy.Item):
     price = scrapy.Field()
     resp_status = scrapy.Field()
     prod_status = scrapy.Field()
-    log_stream_id = scrapy.Field()
+    log_id = scrapy.Field()
