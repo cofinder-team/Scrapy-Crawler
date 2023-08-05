@@ -16,6 +16,7 @@ class ClassifyDog(scrapy.Spider):
     name = "ClassifyDog"
     custom_settings = {
         "ITEM_PIPELINES": {
+            "scrapy_crawler.DBWatchDog.Classify.pipelines.InitCloudwatchLogger": 1,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.CategoryClassifierPipeline": 2,
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.ModelClassifierPipeline": 3,
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.ChipClassifierPipeline": 4,
