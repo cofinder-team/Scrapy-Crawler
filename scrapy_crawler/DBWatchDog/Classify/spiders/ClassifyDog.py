@@ -1,6 +1,3 @@
-import datetime
-from datetime import timedelta
-
 import scrapy
 from scrapy import signals
 from scrapy.exceptions import DropItem
@@ -66,11 +63,8 @@ class ClassifyDog(scrapy.Spider):
             .filter(RawUsedItem.classified == false())
             .filter(RawUsedItem.type == null())
             .filter(RawUsedItem.item_id == null())
-            .filter(
-                RawUsedItem.date
-                >= f"{(datetime.datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')}"
-            )
             .order_by(RawUsedItem.date)
+            .limit(30)
         )
         return item.all()
 
