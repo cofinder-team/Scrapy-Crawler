@@ -99,6 +99,13 @@ class ChipClassifierPipeline:
             f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
 
+        # Macbook Air 15 inch
+        if adapter["model"] == "AIR" and adapter["screen_size"] == 15:
+            adapter["chip"] = "M2"
+            adapter["cpu_core"] = 8
+            adapter["gpu_core"] = 10
+            return item
+
         try:
             chain: LLMChain = self.chain_map[adapter["model"]][adapter["screen_size"]]
             predict = (
@@ -197,6 +204,7 @@ class MacbookClassifyPipeline:
             "MINI": {-1: 1},
             "AIR": {
                 13: 2,
+                15: 11,
             },
             "PRO": {
                 13: 3,
