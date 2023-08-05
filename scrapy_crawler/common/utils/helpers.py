@@ -38,7 +38,7 @@ def has_forbidden_keyword(text: str) -> bool:
 
 
 def too_low_price(price: int) -> bool:
-    return price < 200000
+    return price <= 300000
 
 
 def init_cloudwatch_logger(name: str):
