@@ -51,3 +51,7 @@ def init_cloudwatch_logger(name: str):
     logger = logging.getLogger(name)
     logger.addHandler(console_handler)
     logger.addHandler(cw_handler)
+
+
+def too_long_text(text: str) -> bool:
+    return len(text) > 4000

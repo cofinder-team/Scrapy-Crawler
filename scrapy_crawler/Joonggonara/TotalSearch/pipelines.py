@@ -11,6 +11,7 @@ from scrapy_crawler.common.db.settings import get_engine
 from scrapy_crawler.common.utils import (
     has_forbidden_keyword,
     save_image_from_url,
+    too_long_text,
     too_low_price,
 )
 from scrapy_crawler.Joonggonara.utils import is_used_item
@@ -101,6 +102,12 @@ class ManualFilterPipeline:
                 f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Used item"
             )
             raise DropItem("Used item: %s" % item["url"].split("/")[-1])
+
+        if too_long_text(content):
+            spider.logger.info(
+                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too long text"
+            )
+            raise DropItem("Too long text: %s" % item["url"].split("/")[-1])
 
         return item
 

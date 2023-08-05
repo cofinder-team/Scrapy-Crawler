@@ -5,4 +5,5 @@ from scrapy_crawler.common.utils.helpers import (
     save_image_from_url,
     to_local_timestring,
     too_low_price,
+    too_long_text,
 )
