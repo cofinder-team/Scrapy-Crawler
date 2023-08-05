@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from scrapy_crawler.Bungae.metadata import article
 from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
 from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
-from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
 
@@ -26,7 +25,6 @@ class SoldOutWatcher(scrapy.Spider):
     def __init__(self, n=30, **kwargs):
         super().__init__(**kwargs)
         self.n = n
-        init_cloudwatch_logger(self.name)
         self.session = sessionmaker(bind=get_engine())()
 
     def get_unsold_items(self) -> List[tuple[Deal, RawUsedItem]]:
