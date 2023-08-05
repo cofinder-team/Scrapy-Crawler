@@ -57,7 +57,7 @@ class SoldOutWatcher(scrapy.Spider):
                 errback=lambda failure: self.logger.warn(failure),
                 meta={
                     "item_id": deal.id,
-                    "log_stream_id": raw_used_item.id,
+                    "log_id": raw_used_item.id,
                     "handle_httpstatus_list": [200, 400, 404],
                     "source": deal.source,
                 },
@@ -67,7 +67,7 @@ class SoldOutWatcher(scrapy.Spider):
         item_id = response.meta["item_id"]
         source = response.meta["source"]
         resp_status = response.status
-        log_stream_id = response.meta["log_stream_id"]
+        log_stream_id = response.meta["log_id"]
         prod_status = "SELLING"
         price = 0
 
@@ -85,7 +85,7 @@ class SoldOutWatcher(scrapy.Spider):
 
         yield ArticleStatus(
             id=item_id,
-            log_stream_id=log_stream_id,
+            log_id=log_stream_id,
             price=price,
             resp_status=resp_status,
             prod_status=prod_status,

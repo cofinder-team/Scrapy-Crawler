@@ -20,7 +20,7 @@ class InitCloudwatchLogger:
         console_handler = logging.StreamHandler()
         cw_handler = watchtower.CloudWatchLogHandler(
             log_group="scrapy-chatgpt",
-            stream_name=item["log_stream_id"],
+            stream_name=f"{item['log_id']}",
         )
 
         logger.addHandler(console_handler)
@@ -43,7 +43,7 @@ class UpdateLastCrawledTime:
 
     def process_item(self, item, spider):
         spider.logger.info(
-            f"[{type(self).__name__}][{item['log_stream_id']}] start process_item"
+            f"[{type(self).__name__}][{item['log_id']}] start process_item"
         )
         adapter = ItemAdapter(item)
 
@@ -53,11 +53,11 @@ class UpdateLastCrawledTime:
             )
             self.session.commit()
             spider.logger.info(
-                f"[{type(self).__name__}][{adapter['log_stream_id']}] Update last_crawled"
+                f"[{type(self).__name__}][{adapter['log_id']}] Update last_crawled"
             )
         except Exception as e:
             spider.logger.error(
-                f"[{type(self).__name__}][{adapter['log_stream_id']}] {e.__class__.__name__}: {e}"
+                f"[{type(self).__name__}][{adapter['log_id']}] {e.__class__.__name__}: {e}"
             )
             self.session.rollback()
 
@@ -78,13 +78,13 @@ class UpdateSoldStatus:
 
     def process_item(self, item, spider):
         spider.logger.info(
-            f"[{type(self).__name__}][{item['log_stream_id']}] start process_item"
+            f"[{type(self).__name__}][{item['log_id']}] start process_item"
         )
         adapter = ItemAdapter(item)
 
         id, log_stream_id, resp_status, prod_status = (
             adapter["id"],
-            adapter["log_stream_id"],
+            adapter["log_id"],
             adapter["resp_status"],
             adapter["prod_status"],
         )
