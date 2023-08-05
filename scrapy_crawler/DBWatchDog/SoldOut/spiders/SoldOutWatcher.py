@@ -56,13 +56,13 @@ class SoldOutWatcher(scrapy.Spider):
                 errback=lambda failure: self.logger.warn(failure),
                 meta={
                     "item_id": id,
-                    "handle_httpstatus_list": [200, 404],
+                    "handle_httpstatus_list": [200, 400, 404],
                     "source": item.source,
                 },
             )
 
     def parse(self, response, **kwargs):
-        if response.status == 404:
+        if response.status == 404 or response.status == 400:
             yield ArticleStatus(
                 id=response.meta["item_id"], resp_status=404, prod_status="SOLD_OUT"
             )
