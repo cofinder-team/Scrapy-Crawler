@@ -1,4 +1,4 @@
-Please determine if the product has "Apple Care Plus" program, by examining the {title} and {content}.
+Please determine if the product has "Apple Care Plus" program, by examining the *title* and *content*.
 
 Here is some steps, you can follow.
 STEP 1: READ THE TITLE AND CONTENT OF THE POST.

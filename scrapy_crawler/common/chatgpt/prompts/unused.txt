@@ -1,4 +1,4 @@
-Please determine if the product is "미개봉" , by examining the {title} and {content}.
+Please determine if the product is "미개봉" , by examining the *title* and *content*.
 
 Here is some steps, you can follow.
 STEP 1: READ THE CONTENT OF THE POST.
