@@ -44,7 +44,10 @@ class DuplicateFilterPipeline:
         try:
             item = (
                 self.session.query(RawUsedItem)
-                .filter(RawUsedItem.url == adapter["url"])
+                .filter(
+                    RawUsedItem.url == adapter["url"]
+                    or RawUsedItem.title == adapter["title"]
+                )
                 .first()
             )
             return item is not None

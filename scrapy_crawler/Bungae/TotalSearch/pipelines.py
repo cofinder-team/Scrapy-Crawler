@@ -23,21 +23,27 @@ class DuplicateFilterPipeline:
     def close_spider(self, spider):
         self.session.close()
 
-    def process_item(self, item, spider):
-        spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
-        entity = (
+    def has_duplicate(self, item):
+        return (
             self.session.query(RawUsedItem)
-            .filter(RawUsedItem.url == BunJang.ARTICLE_URL % str(item["pid"]))
+            .filter(
+                RawUsedItem.url == BunJang.ARTICLE_URL % str(item["pid"])
+                or RawUsedItem.title == item["title"]
+            )
             .first()
+            is not None
         )
 
-        if entity is not None:
+    def process_item(self, item, spider):
+        spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
+
+        if self.has_duplicate(item):
             spider.logger.info(
                 f"[{type(self).__name__}][{item['pid']}] Duplicate item found"
             )
             raise DropItem(f"Duplicate item found: {item['pid']}")
-        else:
-            return item
+
+        return item
 
 
 class ManualFilterPipeline:
