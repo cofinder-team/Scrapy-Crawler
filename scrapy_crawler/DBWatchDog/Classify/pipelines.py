@@ -234,7 +234,8 @@ class LabelingAlertPipeline:
 
             average_price = entity.average_price
             return (price <= average_price * 0.75) or (price >= average_price * 1.25)
-        except Exception:
+        except Exception as e:
+            logging.error(f"[{type(self).__name__}][{item['id']}] {e}")
             return True
 
     def process_item(self, item, spider):
