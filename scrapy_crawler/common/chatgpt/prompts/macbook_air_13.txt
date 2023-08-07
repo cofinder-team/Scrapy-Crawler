@@ -1,16 +1,16 @@
-Classify Chip and CPU/GPU core by examining the *title* and *content*.
+Classify CPU/GPU core by examining the *title* and *content*.
 
 Here are some steps you can follow.
 
-STEP 1. READ THE TITLE AND CONTENT.
-STEP 2. CLASSIFY THE CHIP FROM THE TITLE AND CONTENT.
-* YOU CAN HAVE THE FOLLOWING CHIPS
+STEP 1. read the TITLE and CONTENT.
+STEP 2. classify Macbook CHIP from the TITLE or CONTENT.
+* YOU MUST SELECT ONE CHIP FROM THE FOLLOWING TABLE.
  > INTEL
  > M1
  > M2
 
-STEP 3. CLASSIFY THE CPU/GPU CORE FROM THE TITLE AND CONTENT.
-* YOU CAN HAVE CPU/GPU CORE FOR EACH CHIP
+STEP 3. classify CPU/GPU core from the TITLE or CONTENT.
+* YOU MUST SELECT ONE CPU/GPU CORE FROM THE FOLLOWING TABLE.
 > INTEL : N/A
 > M1 : CPU = 8, GPU = 7, 8
 > M2 : CPU = 8, GPU = 8, 10
