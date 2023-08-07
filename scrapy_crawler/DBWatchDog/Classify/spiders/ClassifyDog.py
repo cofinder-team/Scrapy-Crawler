@@ -8,8 +8,6 @@ from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
 from scrapy_crawler.common.db.settings import get_engine
-from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
-from scrapy_crawler.common.utils.constants import CONSOLE_URL
 from scrapy_crawler.DBWatchDog.items import UnClassifiedItem
 
 
@@ -58,12 +56,6 @@ class ClassifyDog(scrapy.Spider):
             }
         )
         self.session.commit()
-
-        bot = LabelingSlackBot()
-        bot.post_labeling_message(
-            console_url=CONSOLE_URL % id,
-            msg=f"{exception}",
-        )
 
     def get_unclassified_items(self) -> list[Type[RawUsedItem]]:
         item = (
