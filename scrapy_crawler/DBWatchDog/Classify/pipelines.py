@@ -6,6 +6,7 @@ import watchtower
 from itemadapter import ItemAdapter
 from scrapy import Spider
 from scrapy.exceptions import DropItem, NotSupported
+from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
@@ -226,9 +227,10 @@ class LabelingAlertPipeline:
         try:
             entity = (
                 self.session.query(ViewTrade)
-                .filter(ViewTrade.item_id == item_id)
+                .filter(ViewTrade.id == item_id)
                 .filter(ViewTrade.type == item_type)
                 .filter(ViewTrade.date == today)
+                .filter(ViewTrade.source == null())
                 .first()
             )
 
