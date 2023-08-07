@@ -1,7 +1,10 @@
 from scrapy.utils import project
 from slack_sdk import WebClient
 
-from scrapy_crawler.common.slack.MessageTemplates import hotdeal_message_template
+from scrapy_crawler.common.slack.MessageTemplates import (
+    hotdeal_message_template,
+    labeling_message_template,
+)
 
 
 class LabelingSlackBot:
@@ -15,6 +18,14 @@ class LabelingSlackBot:
         result = self.slack_client.chat_postMessage(
             channel="hotdeal-alert",
             blocks=hotdeal_message_template(console_url, source, msg),
+        )
+
+        return result
+
+    def post_labeling_message(self, console_url, msg):
+        result = self.slack_client.chat_postMessage(
+            channel="hotdeal-alert",
+            blocks=labeling_message_template(console_url, msg),
         )
 
         return result
