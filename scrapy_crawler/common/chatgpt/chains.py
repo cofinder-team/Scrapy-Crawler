@@ -22,7 +22,7 @@ PREFIX = "scrapy_crawler/common/chatgpt/prompts/%s"
 GPT4_MODEL_NAME = "gpt-4-0613"
 GPT3_MODEL_NAME = "gpt-3.5-turbo-0613"
 unused_chain: LLMChain = create_llm_chain(
-    GPT3_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
+    GPT4_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
 )
 apple_care_plus_chain: LLMChain = create_llm_chain(
     GPT3_MODEL_NAME, PREFIX % "apple_care_plus.txt", ["title", "content"]
