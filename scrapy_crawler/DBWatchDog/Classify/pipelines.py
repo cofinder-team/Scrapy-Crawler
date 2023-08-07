@@ -216,22 +216,13 @@ class LabelingAlertPipeline:
 
         return len(keywords) > 1
 
-    def is_macbook_air_15inch(self, item) -> bool:
-        return item["model"] == "AIR" and item["screen_size"] == 15
-
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
 
-        if self.is_macbook_air_15inch(item):
-            self.slack_bot.post_hotdeal_message(
-                console_url=CONSOLE_URL % adapter["id"],
-                source=adapter["source"],
-                msg="맥북에어 15인치 검증",
-            )
-        elif self.has_multiple_generation(item):
+        if self.has_multiple_generation(item):
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
                 source=adapter["source"],
