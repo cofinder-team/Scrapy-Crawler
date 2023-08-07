@@ -225,7 +225,7 @@ class LabelingAlertPipeline:
         price = item["price"]
 
         try:
-            entity = (
+            entity: ViewTrade = (
                 self.session.query(ViewTrade)
                 .filter(ViewTrade.id == item_id)
                 .filter(ViewTrade.type == item_type)
@@ -234,7 +234,7 @@ class LabelingAlertPipeline:
                 .first()
             )
 
-            average_price = entity.average_price
+            average_price = entity.average
             return (price <= average_price * 0.75) or (price >= average_price * 1.25)
         except Exception as e:
             logging.error(f"[{type(self).__name__}][{item['id']}] {e}")
