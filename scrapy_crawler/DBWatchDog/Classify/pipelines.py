@@ -1,3 +1,4 @@
+import datetime
 import logging
 import re
 
@@ -14,7 +15,7 @@ from scrapy_crawler.common.chatgpt.chains import (
     unused_chain,
 )
 from scrapy_crawler.common.db import RawUsedItem, get_engine
-from scrapy_crawler.common.db.models import Deal
+from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL
@@ -216,6 +217,26 @@ class LabelingAlertPipeline:
 
         return len(keywords) > 1
 
+    def is_abnormal_price(self, item: MacbookItem | IpadItem) -> bool:
+        item_id = item["item_id"]
+        item_type = "P" if isinstance(item, IpadItem) else "M"
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+        price = item["price"]
+
+        try:
+            entity = (
+                self.session.query(ViewTrade)
+                .filter(ViewTrade.item_id == item_id)
+                .filter(ViewTrade.type == item_type)
+                .filter(ViewTrade.date == today)
+                .first()
+            )
+
+            average_price = entity.average_price
+            return (price <= average_price * 0.75) or (price >= average_price * 1.25)
+        except Exception:
+            return True
+
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         spider.logger.info(
@@ -227,6 +248,15 @@ class LabelingAlertPipeline:
                 console_url=CONSOLE_URL % adapter["id"],
                 source=adapter["source"],
                 msg="세대수 검증(여러 세대 존재)",
+            )
+
+            raise NotSupported("Stop processing item")
+
+        if self.is_abnormal_price(item):
+            self.slack_bot.post_hotdeal_message(
+                console_url=CONSOLE_URL % adapter["id"],
+                source=adapter["source"],
+                msg="가격/모델 검증(가격 비정상)",
             )
 
             raise NotSupported("Stop processing item")
