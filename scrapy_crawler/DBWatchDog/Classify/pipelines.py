@@ -19,7 +19,7 @@ from scrapy_crawler.common.db import RawUsedItem, get_engine
 from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
-from scrapy_crawler.common.utils.constants import CONSOLE_URL
+from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
 from scrapy_crawler.DBWatchDog.items import IpadItem, MacbookItem
 
 log_group_name = "scrapy-chatgpt"
@@ -333,43 +333,39 @@ class PersistDealPipeline:
             raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")
 
 
-# For Deal table
-# class LabelingAlertPipeline:
-#     name = "LabelingAlertPipeline"
-#
-#     def __init__(self):
-#         self.slack_bot = LabelingSlackBot()
-#         self.session = None
-#
-#     def open_spider(self, spider):
-#         self.session = sessionmaker(bind=get_engine())()
-#
-#     def close_spider(self, spider):
-#         self.session.close()
-#
-#     def get_entity(self, url: str) -> Deal:
-#         entity = self.session.query(Deal).filter(Deal.url == url).first()
-#         return entity
-#
-#     def process_item(self, item, spider):
-#         adapter = ItemAdapter(item)
-#         spider.logger.info(
-#             f"[{type(self).__name__}][{item['id']}] start processing item"
-#         )
-#
-#         entity = self.get_entity(adapter["url"])
-#
-#         model = adapter["model"]
-#         source = entity.source
-#
-#         if (
-#             model == "IPADPRO"
-#             or source != "중고나라"
-#             or re.findall("미개봉|새제품", adapter["title"] + adapter["content"])
-#         ):
-#             self.slack_bot.post_hotdeal_message(
-#                 console_url=f"https://dev.macguider.io/deals/report/{entity.id}",
-#                 source=source,
-#             )
-#
-#         return item
+class DealAlertPipeline:
+    name = "DealAlertPipeline"
+
+    def __init__(self):
+        self.slack_bot = LabelingSlackBot()
+        self.session = None
+
+    def open_spider(self, spider):
+        self.session = sessionmaker(bind=get_engine())()
+
+    def close_spider(self, spider):
+        self.session.close()
+
+    def get_entity(self, url: str) -> Deal:
+        entity = self.session.query(Deal).filter(Deal.url == url).first()
+        return entity
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['id']}] start processing item"
+        )
+
+        entity = self.get_entity(adapter["url"])
+
+        model = adapter["model"]
+        source = entity.source
+
+        if model == "IPADMINI":
+            self.slack_bot.post_hotdeal_message(
+                console_url=NEW_CONSOLE_URL % entity.id,
+                source=source,
+                msg="아이패드 미니 5세대, 한번 봐주세요",
+            )
+
+        return item
