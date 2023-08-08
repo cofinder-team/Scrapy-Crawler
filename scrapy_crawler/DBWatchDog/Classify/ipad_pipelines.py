@@ -170,6 +170,7 @@ class StorageClassifierPipeline:
             ),
             "IPADMINI": dict(
                 {
+                    5: 64,
                     6: 64,
                 }
             ),
