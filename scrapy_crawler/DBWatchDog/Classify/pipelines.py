@@ -361,7 +361,7 @@ class DealAlertPipeline:
         model = adapter["model"]
         source = entity.source
 
-        if model == "IPADMINI":
+        if model == "IPADMINI" and adapter["generation"] == 5:
             self.slack_bot.post_hotdeal_message(
                 console_url=NEW_CONSOLE_URL % entity.id,
                 source=source,
