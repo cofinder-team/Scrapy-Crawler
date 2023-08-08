@@ -14,7 +14,6 @@ from scrapy_crawler.common.utils import (
     too_long_text,
     too_low_price,
 )
-from scrapy_crawler.Joonggonara.utils import is_used_item
 
 """
     Scrapy Item : ArticleItem
@@ -81,11 +80,10 @@ class ManualFilterPipeline:
         )
         adapter = ItemAdapter(item)
 
-        title, content, price, condition = (
+        title, content, price = (
             adapter["title"],
             adapter["content"],
             adapter["price"],
-            adapter["product_condition"],
         )
 
         if has_forbidden_keyword(title + content):
@@ -99,12 +97,6 @@ class ManualFilterPipeline:
                 f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too low price"
             )
             raise DropItem("Too low price: %s" % item["price"])
-
-        if is_used_item(condition):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Used item"
-            )
-            raise DropItem("Used item: %s" % item["url"].split("/")[-1])
 
         if too_long_text(content):
             spider.logger.info(

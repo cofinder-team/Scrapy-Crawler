@@ -97,7 +97,7 @@ class GenerationClassifierPipeline:
             ),
             "IPADMINI": dict(
                 {
-                    8.3: [6],
+                    8.3: [5, 6],
                 }
             ),
         }
