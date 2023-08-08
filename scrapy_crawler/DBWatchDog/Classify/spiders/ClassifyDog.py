@@ -31,6 +31,7 @@ class ClassifyDog(scrapy.Spider):
             "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistRawUsedItemPipeline": 14,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.LabelingAlertPipeline": 15,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistDealPipeline": 16,
+            "scrapy_crawler.DBWatchDog.Classify.pipelines.DealAlertPipeline": 17,
         },
     }
 
