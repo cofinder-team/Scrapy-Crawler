@@ -44,10 +44,12 @@ class BgKeywordSpider(scrapy.Spider):
 
     def parse_article(self, response):
         root = ArticleRoot.from_dict(json.loads(response.text))
+        keyword = root.data.product.keywords
+        content = root.data.product.description + "\n" + ", ".join(keyword)
         yield ArticleItem(
             pid=root.data.product.pid,
             title=root.data.product.name,
-            content=root.data.product.description,
+            content=content,
             price=root.data.product.price,
             img_url=root.data.product.imageUrl.replace("{cnt}", "1").replace(
                 "{res}", "300"
