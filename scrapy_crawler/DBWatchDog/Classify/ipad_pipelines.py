@@ -27,7 +27,7 @@ class ModelClassifierPipeline:
     def __init__(self):
         self.ipad_chain: LLMChain = ipad_chain
         self.screen_size_map = {
-            "MINI": 8.3,
+            "IPADMINI": 8.3,
             "IPAD": 12.9,
         }
 
