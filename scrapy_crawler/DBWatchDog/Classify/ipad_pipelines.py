@@ -238,7 +238,7 @@ class CellularClassifierPipeline:
         title = adapter["title"].upper()
         content = adapter["content"].upper()
 
-        regex = re.compile(r"셀룰|LTE|Cellular|")
+        regex = re.compile(r"셀룰|LTE|Cell|5G|샐룰")
 
         if regex.search(title + content) is None:
             adapter["cellular"] = False
