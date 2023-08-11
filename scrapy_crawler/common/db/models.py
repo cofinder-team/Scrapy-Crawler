@@ -113,6 +113,16 @@ class ItemIpad(Base):
     cellular = Column("cellular", Boolean)
 
 
+class ItemIphone(Base):
+    __tablename__ = "item_iphone"
+    id = Column(Integer, primary_key=True)
+    type = Column("type", ForeignKey("item.type"))
+    model = Column("model", ForeignKey("model.type"))
+    option = Column("option", Integer)
+    model_suffix = Column("model_suffix", String)
+    ssd = Column("storage", Integer)
+
+
 class ViewTrade(Base):
     __tablename__ = "price_trade"
     type = Column("type", String, primary_key=True)
