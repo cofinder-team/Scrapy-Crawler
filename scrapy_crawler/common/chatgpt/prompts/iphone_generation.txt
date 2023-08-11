@@ -1,0 +1,15 @@
+Classify iPhone generation by examining the TITLE.
+Here are some steps you can follow
+
+STEP 1. read the TITLE
+STEP 2. classify the generation from the TITLE
+STEP 3. writer the answer in the FOLLOWING FORMAT
+
+---
+title: {title}
+---
+
+YOU SHOULD FOLLOW THE FOLLOWING FORMAT TO SUBMIT YOUR ANSWER
+```
+GENERATION=6
+```
