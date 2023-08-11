@@ -5,6 +5,9 @@ from io import BytesIO
 import requests
 import watchtower
 
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
+from scrapy_crawler.common.enums import TypeEnum
+
 
 def get_local_timestring() -> str:
     return (datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
@@ -68,3 +71,14 @@ def init_cloudwatch_logger(name: str):
 
 def too_long_text(text: str) -> bool:
     return len(text) > 4000
+
+
+def item_to_type(item: IpadItem | IphoneItem | MacbookItem) -> TypeEnum:
+    if isinstance(item, IpadItem):
+        return TypeEnum.IPAD
+    elif isinstance(item, IphoneItem):
+        return TypeEnum.IPHONE
+    elif isinstance(item, MacbookItem):
+        return TypeEnum.MACBOOK
+    else:
+        raise ValueError(f"Unknown item type: {type(item)}")

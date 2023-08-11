@@ -9,6 +9,7 @@ from scrapy.exceptions import DropItem, NotSupported
 from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
     apple_care_plus_chain,
@@ -20,7 +21,7 @@ from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
-from scrapy_crawler.DBWatchDog.items import IpadItem, MacbookItem
+from scrapy_crawler.common.utils.helpers import item_to_type
 
 log_group_name = "scrapy-chatgpt"
 
@@ -172,8 +173,8 @@ class PersistRawUsedItemPipeline:
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
         try:
-            item_type = "P" if isinstance(item, IpadItem) else "M"
             item_id = adapter["item_id"]
+            item_type = item_to_type(item).value
             unused = adapter["unused"]
 
             logging.error(
@@ -284,7 +285,8 @@ class PersistDealPipeline:
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
-        item_type = "P" if isinstance(item, IpadItem) else "M"
+
+        item_type = item_to_type(item).value
         try:
             # Get RawUsedItem
             entity: RawUsedItem = (
