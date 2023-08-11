@@ -248,29 +248,34 @@ class LabelingAlertPipeline:
             logging.error(f"[{type(self).__name__}][{item['id']}] {e}")
             return True
 
+    def is_iphone(self, item: MacbookItem | IpadItem | IphoneItem) -> bool:
+        return isinstance(item, IphoneItem)
+
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
 
+        alert_msgs = []
         if self.has_multiple_generation(item):
-            self.slack_bot.post_hotdeal_message(
-                console_url=CONSOLE_URL % adapter["id"],
-                source=adapter["source"],
-                msg="세대수 검증(여러 세대 존재)",
-            )
-
-            raise NotSupported("Stop processing item")
+            alert_msgs.append("모델 분류 확인")
 
         if self.is_abnormal_price(item):
+            alert_msgs.append("모델/상태 분류 확인")
+
+        if self.is_iphone(item):
+            alert_msgs.append("(임시)아이폰 모델 분류 확인")
+
+        if len(alert_msgs) > 0:
+            msgs = " && ".join(alert_msgs)
             self.slack_bot.post_hotdeal_message(
                 console_url=CONSOLE_URL % adapter["id"],
                 source=adapter["source"],
-                msg="가격/모델 검증(가격 비정상)",
+                msg=msgs,
             )
 
-            raise NotSupported("Stop processing item")
+            raise NotSupported(f"[{type(self).__name__}][{item['id']}] {msgs}")
 
         return item
 
