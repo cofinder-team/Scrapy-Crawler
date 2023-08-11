@@ -41,3 +41,13 @@ class IpadItem(UnClassifiedItem):
     apple_care_plus = scrapy.Field()
     generation = scrapy.Field()
     cellular = scrapy.Field()
+
+
+class IphoneItem(UnClassifiedItem):
+    def __repr__(self):
+        return f"IphoneItem(id={self['id']}, title={self['title']})"
+
+    ssd = scrapy.Field()
+    unused = scrapy.Field()
+    generation = scrapy.Field()
+    apple_care_plus = scrapy.Field()
