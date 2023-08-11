@@ -9,7 +9,6 @@ from scrapy.exceptions import DropItem, NotSupported
 from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
     apple_care_plus_chain,
@@ -22,6 +21,7 @@ from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
 from scrapy_crawler.common.utils.helpers import item_to_type
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
 log_group_name = "scrapy-chatgpt"
 
@@ -66,11 +66,18 @@ class CategoryClassifierPipeline:
             ],
         ).upper()
 
-        result: re.Match[bytes] | None = re.search(r"IPAD|MAC", raw_result)
+        result: re.Match[bytes] | None = re.search(r"IPAD|MAC|IPHONE", raw_result)
         try:
             category = result.group().upper()
 
-            return IpadItem(**adapter) if category == "IPAD" else MacbookItem(**adapter)
+            if category == "MAC":
+                return MacbookItem(**adapter)
+            elif category == "IPAD":
+                return IpadItem(**adapter)
+            elif category == "IPHONE":
+                return IphoneItem(**adapter)
+            else:
+                raise NotSupported(result)
 
         except Exception as e:
             raise DropItem(f"CategoryClassifierPipeline: {e}")
@@ -219,7 +226,7 @@ class LabelingAlertPipeline:
 
         return len(keywords) > 1
 
-    def is_abnormal_price(self, item: MacbookItem | IpadItem) -> bool:
+    def is_abnormal_price(self, item: MacbookItem | IpadItem | IphoneItem) -> bool:
         item_id = item["item_id"]
         item_type = "P" if isinstance(item, IpadItem) else "M"
         today = datetime.datetime.now().strftime("%Y-%m-%d")

@@ -5,8 +5,8 @@ from io import BytesIO
 import requests
 import watchtower
 
-from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 from scrapy_crawler.common.enums import TypeEnum
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
 
 def get_local_timestring() -> str:
