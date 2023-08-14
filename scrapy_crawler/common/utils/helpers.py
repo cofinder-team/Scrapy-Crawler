@@ -6,6 +6,7 @@ import requests
 import watchtower
 
 from scrapy_crawler.common.enums import TypeEnum
+from scrapy_crawler.common.utils.constants import FAKE_HEADER
 from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
 
@@ -24,7 +25,7 @@ def to_local_timestring(timestamp: int) -> str:
 
 
 def save_image_from_url(image_url) -> BytesIO:
-    response = requests.get(image_url, timeout=5)
+    response = requests.get(image_url, headers=FAKE_HEADER, timeout=5)
     response.raise_for_status()
 
     return BytesIO(response.content)
