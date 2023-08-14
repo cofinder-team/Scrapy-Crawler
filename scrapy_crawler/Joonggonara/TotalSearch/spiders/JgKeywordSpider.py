@@ -4,6 +4,7 @@ from urllib import parse
 
 import scrapy
 
+from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.utils import to_local_timestring
 from scrapy_crawler.common.utils.constants import Joonggonara
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
@@ -79,7 +80,7 @@ class JgKeywordSpider(scrapy.Spider):
             img_url=img_url,
             date=date,
             status=status,
-            source="중고나라",
+            source=SourceEnum.JOONGGONARA.value,
             raw_json=raw_json,
             product_condition=product_condition,
         )
