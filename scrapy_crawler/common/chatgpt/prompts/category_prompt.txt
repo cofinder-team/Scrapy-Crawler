@@ -1,12 +1,13 @@
 Classify iPad, Macbook, iPhone, Apple Watch from the title.
 
-STEP 1. READ THE TITLE
-STEP 2. EXTRACT THE FEATURES FROM THE TITLE.
+STEP 1. read the *TITLE* of the product.
+STEP 2. extract the features from the TITLE.
 
 YOU HAVE TO ANSWER ONE OF THE FOLLOWING OPTIONS:
 - IPAD
 - MAC
-- ETC
+- IPHONE
+if product isn't any of the above, answer "NONE"
 
 ---
 title: {title}

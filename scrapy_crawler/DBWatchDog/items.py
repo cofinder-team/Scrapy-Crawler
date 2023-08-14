@@ -11,14 +11,14 @@ class UnClassifiedItem(scrapy.Item):
     price = scrapy.Field()
     url = scrapy.Field()
     source = scrapy.Field()
+    item_id = scrapy.Field()
+    model = scrapy.Field()
 
 
 class MacbookItem(UnClassifiedItem):
     def __repr__(self):
         return f"MacBookItem(id={self['id']}, title={self['title']})"
 
-    item_id = scrapy.Field()
-    model = scrapy.Field()
     screen_size = scrapy.Field()
     chip = scrapy.Field()
     cpu_core = scrapy.Field()
@@ -33,11 +33,19 @@ class IpadItem(UnClassifiedItem):
     def __repr__(self):
         return f"IpadItem(id={self['id']}, title={self['title']})"
 
-    item_id = scrapy.Field()
-    model = scrapy.Field()
     screen_size = scrapy.Field()
     ssd = scrapy.Field()
     unused = scrapy.Field()
     apple_care_plus = scrapy.Field()
     generation = scrapy.Field()
     cellular = scrapy.Field()
+
+
+class IphoneItem(UnClassifiedItem):
+    def __repr__(self):
+        return f"IphoneItem(id={self['id']}, title={self['title']})"
+
+    ssd = scrapy.Field()
+    unused = scrapy.Field()
+    generation = scrapy.Field()
+    apple_care_plus = scrapy.Field()

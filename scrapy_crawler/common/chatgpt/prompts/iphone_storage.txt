@@ -1,0 +1,19 @@
+Classify STORAGE CAPACITY by examining the TITLE and CONTENT.
+Here are some steps you can follow.
+
+STEP 1. read the TITLE and CONTENT
+STEP 2. extract the STORAGE CAPACITY from the TITLE and CONTENT, EXAMPLE "256GB", "512GB" ETC.
+
+* if STORAGE CAPACITY are not found in TITLE and CONTENT, YOU CAN FOLLOW EXTRA STEPS BELOW.
+EXTRA STEP. extract the information about iphone model from the TITLE and CONTENT, EXAMPLE "기본형", "깡통" ETC.
+if the iphone model is found, you can use below default capacity.
+DEFAULT STORAGE CAPACITY = {default_storage}
+
+---
+title: {title}
+content: {content}
+---
+
+YOU HAVE TO ANSWER IN FOLLOWING FORMAT.
+"STORAGE=256GB"
+"STORAGE=512GB"

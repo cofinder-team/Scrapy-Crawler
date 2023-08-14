@@ -66,3 +66,17 @@ ipad_system_chain: LLMChain = create_llm_chain(
 ipad_cellular_chain: LLMChain = create_llm_chain(
     GPT4_MODEL_NAME, PREFIX % "ipad_cellular.txt", ["title", "content"]
 )
+
+iphone_generation_chain = create_llm_chain(
+    GPT3_MODEL_NAME, PREFIX % "iphone_generation.txt", ["title"]
+)
+
+iphone_storage_chain = create_llm_chain(
+    GPT3_MODEL_NAME,
+    PREFIX % "iphone_storage.txt",
+    ["title", "content", "default_storage"],
+)
+
+iphone_model_chain = create_llm_chain(
+    GPT3_MODEL_NAME, PREFIX % "iphone_model.txt", ["title", "content"]
+)

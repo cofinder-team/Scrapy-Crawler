@@ -1,0 +1,22 @@
+Classify IPHONE MODEL by examining the TITLE and CONTENT.
+Here are some steps you can follow.
+
+STEP 1. read the TITLE and CONTENT
+STEP 2. extract the information about iphone model from the TITLE and CONTENT, EXAMPLE "프로", "프로 맥스", "Plus" ETC.
+* Here are some models you can use as answer.
+> MINI
+> PLUS
+> PRO
+> PRO MAX
+
+* if model information are not found in TITLE and CONTENT, YOU CAN USE "DEFAULT" AS ANSWER
+
+---
+title: {title}
+content: {content}
+---
+YOU HAVE TO ANSWER IN FOLLOWING FORMAT.
+"MODEL=DEFAULT"
+"MODEL=MINI"
+"MODEL=PLUS"
+... ETC
