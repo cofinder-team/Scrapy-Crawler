@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.Bungae.metadata import article
 from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
+from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
@@ -56,7 +57,7 @@ class SoldOutWatcher(scrapy.Spider):
         return item.all()
 
     def get_article_url(self, item: Type[Deal]) -> str:
-        if item.source == "중고나라":
+        if item.source == SourceEnum.JOONGGONARA.value:
             return Joonggonara.ARTICLE_API_URL % item.url.split("/")[-1]
         else:
             return BunJang.ARTICLE_API_URL % item.url.split("/")[-1]
@@ -97,7 +98,7 @@ class SoldOutWatcher(scrapy.Spider):
         price = 0
 
         if resp_status not in [400, 404]:
-            if source == "중고나라":
+            if source == SourceEnum.JOONGGONARA.value:
                 root = ArticleRoot.from_dict(json.loads(response.text))
                 prod_status = (
                     root.result.saleInfo.saleStatus if root.result else "SOLD_OUT"

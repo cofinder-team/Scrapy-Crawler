@@ -7,6 +7,7 @@ import scrapy
 from scrapy_crawler.Bungae.metadata.article import ArticleRoot
 from scrapy_crawler.Bungae.metadata.total_search import BgList, TotalSearchRoot
 from scrapy_crawler.Bungae.TotalSearch.items import ArticleItem
+from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 
@@ -57,6 +58,6 @@ class BgKeywordSpider(scrapy.Spider):
             prod_status=root.data.product.status,
             date=root.data.product.updatedAt,
             raw_json=json.loads(response.text),
-            source="번개장터",
+            source=SourceEnum.BUNGAE.value,
             writer=str(root.data.shop.uid),
         )
