@@ -68,6 +68,7 @@ class ClassifyDog(scrapy.Spider):
             .filter(RawUsedItem.classified == false())
             .filter(RawUsedItem.type == null())
             .filter(RawUsedItem.item_id == null())
+            .filter(RawUsedItem.title != null())  # 당근마켓 메타 크롤링 데이터 제외
             .order_by(RawUsedItem.date)
             .limit(30)
         )
