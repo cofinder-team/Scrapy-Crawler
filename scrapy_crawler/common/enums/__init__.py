@@ -1,1 +1,1 @@
-from TypeEnum import TypeEnum
+from scrapy_crawler.common.enums.TypeEnum import TypeEnum
