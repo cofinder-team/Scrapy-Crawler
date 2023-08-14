@@ -30,3 +30,7 @@ class Joonggonara:
     )
     ARTICLE_API_URL = "https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/%s"
     ARTICLE_URL = "https://cafe.naver.com/joonggonara/%s"
+
+
+class Daangn:
+    PROFILE_URL = "https://www.daangn.com/u/%s"
