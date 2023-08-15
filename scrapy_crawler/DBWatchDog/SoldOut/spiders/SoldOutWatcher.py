@@ -7,12 +7,12 @@ from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.Bungae.metadata import article
-from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
-from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
 from scrapy_crawler.common.enums import DgArticleStatusEnum
 from scrapy_crawler.common.enums.SourceEnum import SourceEnum
 from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
+from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
+from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
 
 
 class SoldOutWatcher(scrapy.Spider):
@@ -42,11 +42,15 @@ class SoldOutWatcher(scrapy.Spider):
 
         return item.all()
 
-    def get_article_url(self, item: Type[Deal]) -> str:
+    def get_article_url(self, item: Deal) -> str:
         if item.source == SourceEnum.JOONGGONARA.value:
             return Joonggonara.ARTICLE_API_URL % item.url.split("/")[-1]
-        else:
+        elif item.source == SourceEnum.BUNGAE.value:
             return BunJang.ARTICLE_API_URL % item.url.split("/")[-1]
+        elif item.source == SourceEnum.DAANGN.value:
+            return item.url
+        else:
+            raise Exception(f"Unknown source: {item.source}")
 
     def start_requests(self):
         unsold_items = self.get_unsold_items()
@@ -71,20 +75,33 @@ class SoldOutWatcher(scrapy.Spider):
         source = response.meta["source"]
         resp_status = response.status
         log_stream_id = response.meta["log_id"]
-        prod_status = "SELLING"
         price = 0
 
-        if resp_status not in [400, 404]:
-            if source == SourceEnum.JOONGGONARA.value:
+        if source == SourceEnum.DAANGN.value:
+            sel: Selector = Selector(response)
+            prod_status = DgArticleStatusEnum.from_response(response).value
+            raw_price = sel.css(
+                "#content > #article-description > #article-price::attr(content)"
+            ).get()
+            price = int(raw_price.split(".")[0]) if raw_price.split(".")[0] != "" else 0
+        elif source == SourceEnum.BUNGAE.value:
+            if resp_status == 400:
+                prod_status = "SOLD_OUT"
+            else:
+                root = article.ArticleRoot.from_dict(json.loads(response.text))
+                prod_status = root.data.product.saleStatus if root.data else "SOLD_OUT"
+                price = root.data.product.price if root.data else 0
+        elif source == SourceEnum.JOONGGONARA.value:
+            if resp_status == 404:
+                prod_status = "SOLD_OUT"
+            else:
                 root = ArticleRoot.from_dict(json.loads(response.text))
                 prod_status = (
                     root.result.saleInfo.saleStatus if root.result else "SOLD_OUT"
                 )
                 price = root.result.saleInfo.price if root.result else 0
-            else:
-                root = article.ArticleRoot.from_dict(json.loads(response.text))
-                prod_status = root.data.product.saleStatus if root.data else "SOLD_OUT"
-                price = root.data.product.price if root.data else 0
+        else:
+            raise Exception(f"Unknown source: {source}")
 
         yield ArticleStatus(
             id=item_id,
