@@ -1,16 +1,18 @@
 import json
-from typing import List, Type
+from typing import List
 
 import scrapy
+from scrapy import Selector
 from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.Bungae.metadata import article
-from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
-from scrapy_crawler.common.enums import SourceEnum
-from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
-from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
+from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
+from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
+from scrapy_crawler.common.enums import DgArticleStatusEnum
+from scrapy_crawler.common.enums.SourceEnum import SourceEnum
+from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
 
 
 class SoldOutWatcher(scrapy.Spider):
@@ -19,7 +21,7 @@ class SoldOutWatcher(scrapy.Spider):
         "ITEM_PIPELINES": {
             "scrapy_crawler.DBWatchDog.SoldOut.pipelines.InitCloudwatchLogger": 1,
             "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateLastCrawledTime": 2,
-            "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateSoldStatus": 2,
+            "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateSoldStatus": 3,
         },
     }
 
