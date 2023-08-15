@@ -248,9 +248,6 @@ class LabelingAlertPipeline:
             logging.error(f"[{type(self).__name__}][{item['id']}] {e}")
             return True
 
-    def is_iphone(self, item: MacbookItem | IpadItem | IphoneItem) -> bool:
-        return isinstance(item, IphoneItem)
-
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
         spider.logger.info(
@@ -263,9 +260,6 @@ class LabelingAlertPipeline:
 
         if self.is_abnormal_price(item):
             alert_msgs.append("모델/상태 분류 확인")
-
-        if self.is_iphone(item):
-            alert_msgs.append("(임시)아이폰 모델 분류 확인")
 
         if len(alert_msgs) > 0:
             msgs = " && ".join(alert_msgs)
