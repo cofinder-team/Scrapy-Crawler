@@ -73,12 +73,14 @@ class DaangnMetaSpider(scrapy.Spider):
             if (price := self.get_price(sel)) == 0:  # 나눔
                 return None
 
-            img_url = (
-                sel.css("meta[property='og:image']::attr(content)")
-                .get()
-                .replace("s=1440x1440", "s=300x300")
-                .replace("&f=webp", "")
-            )
+            if (
+                img_url := sel.css("#content > #article-header > img::attr(src)").get()
+            ) is None:
+                img_url = ""
+            else:
+                img_url = img_url.replace("s=1440x1440", "s=300x300").replace(
+                    "&f=webp", ""
+                )
 
             yield ArticleItem(
                 id=id,
