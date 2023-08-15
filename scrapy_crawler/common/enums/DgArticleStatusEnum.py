@@ -8,11 +8,11 @@ from scrapy_crawler.common.utils.constants import FAKE_HEADER, Daangn
 
 
 class DgArticleStatusEnum(Enum):
-    SELLING = 1
-    RESERVED = 2  # Can not check in WEB
-    SOLD = 3
-    HIDDEN = 4
-    DELETED = 5
+    SELLING = "SELLING"
+    RESERVED = "RESERVED"  # Can not check in WEB
+    SOLD = "SOLD_OUT"
+    HIDDEN = "HIDDEN"
+    DELETED = "DELETED"
 
     @classmethod
     def from_response(cls, response: Response) -> "DgArticleStatusEnum":
