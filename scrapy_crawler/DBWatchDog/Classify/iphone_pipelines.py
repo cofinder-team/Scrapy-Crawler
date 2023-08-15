@@ -206,9 +206,6 @@ class IphoneClassifyPipeline:
         storage = item["ssd"]
         suffix = item["model"]
 
-        if suffix == "PRO":
-            suffix = "PROMAX"
-
         try:
             entity: ItemIphone = (
                 self.session.query(ItemIphone)
