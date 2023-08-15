@@ -66,7 +66,7 @@ class UpdateSoldStatus:
             adapter["prod_status"],
         )
 
-        if resp_status in [400, 404] or prod_status == "SOLD_OUT":
+        if prod_status == "SOLD_OUT":
             try:
                 self.session.query(Deal).filter(Deal.id == id).update(
                     {Deal.sold: true()}
@@ -83,7 +83,7 @@ class UpdateSoldStatus:
 
         elif resp_status == 200:
             spider.logger.info(
-                f"[{type(self).__name__}][{log_stream_id}] Update prod_status to {prod_status}"
+                f"[{type(self).__name__}][{log_stream_id}] Current prod_status to {prod_status}"
             )
 
         return item
