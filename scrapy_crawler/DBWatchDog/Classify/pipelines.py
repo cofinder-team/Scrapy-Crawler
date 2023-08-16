@@ -253,6 +253,9 @@ class LabelingAlertPipeline:
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
+        # Temporarily disable alert
+        if isinstance(item, IphoneItem):
+            return item
 
         alert_msgs = []
         if self.has_multiple_generation(item):
