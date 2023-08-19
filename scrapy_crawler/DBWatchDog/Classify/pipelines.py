@@ -2,13 +2,12 @@ import datetime
 import logging
 import re
 
-import watchtower
 from itemadapter import ItemAdapter
-from scrapy import Spider
 from scrapy.exceptions import DropItem, NotSupported
 from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
     apple_care_plus_chain,
@@ -21,28 +20,7 @@ from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
 from scrapy_crawler.common.utils.helpers import item_to_type
-from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
-log_group_name = "scrapy-chatgpt"
-
-
-class InitCloudwatchLogger:
-    name = "InitCloudwatchLogger"
-
-    def process_item(self, item, spider: Spider):
-        logger = logging.getLogger(spider.name)
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
-        console_handler = logging.StreamHandler()
-        cw_handler = watchtower.CloudWatchLogHandler(
-            log_group="scrapy-chatgpt",
-            stream_name=f"{item['id']}",
-        )
-
-        logger.addHandler(console_handler)
-        logger.addHandler(cw_handler)
-
-        return item
 
 
 class CategoryClassifierPipeline:
