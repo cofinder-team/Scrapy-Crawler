@@ -1,5 +1,6 @@
 #!/usr/bin/python
+import sys
 
-from scrapy.cmdline import execute
+from scrapy import cmdline
 
-execute()
+cmdline.execute(f"scrapy crawl {sys.argv[1]}".split())

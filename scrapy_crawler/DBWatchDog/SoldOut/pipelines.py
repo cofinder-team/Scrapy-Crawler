@@ -1,32 +1,9 @@
-import logging
-
-import watchtower
 from itemadapter import ItemAdapter
-from scrapy import Spider
 from sqlalchemy import true
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db import Deal, get_engine
 from scrapy_crawler.common.utils import get_local_timestring
-
-
-class InitCloudwatchLogger:
-    name = "InitCloudwatchLogger"
-
-    def process_item(self, item, spider: Spider):
-        logger = logging.getLogger(spider.name)
-        for handler in logger.handlers[:]:
-            logger.removeHandler(handler)
-        console_handler = logging.StreamHandler()
-        cw_handler = watchtower.CloudWatchLogHandler(
-            log_group="scrapy-chatgpt",
-            stream_name=f"{item['log_id']}",
-        )
-
-        logger.addHandler(console_handler)
-        logger.addHandler(cw_handler)
-
-        return item
 
 
 class UpdateLastCrawledTime:

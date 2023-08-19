@@ -1,7 +1,10 @@
 import json
-from typing import List, Type
+import logging
+from typing import List, Optional, Type
 
 import scrapy
+import watchtower
+from scrapy import signals
 from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
@@ -16,16 +19,29 @@ class SoldOutWatcher(scrapy.Spider):
     name = "SoldOutWatcher"
     custom_settings = {
         "ITEM_PIPELINES": {
-            "scrapy_crawler.DBWatchDog.SoldOut.pipelines.InitCloudwatchLogger": 1,
-            "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateLastCrawledTime": 2,
+            "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateLastCrawledTime": 1,
             "scrapy_crawler.DBWatchDog.SoldOut.pipelines.UpdateSoldStatus": 2,
         },
     }
 
-    def __init__(self, n=30, **kwargs):
+    def __init__(self, n=100, **kwargs):
         super().__init__(**kwargs)
         self.n = n
+        self.cw_handler: Optional[watchtower.CloudWatchLogHandler] = None
         self.session = sessionmaker(bind=get_engine())()
+        self.init_cloudwatch_logger()
+
+    def init_cloudwatch_logger(self):
+        logger = logging.getLogger(self.name)
+
+        console_handler = logging.StreamHandler()
+        self.cw_handler = watchtower.CloudWatchLogHandler(
+            log_group="scrapy-chatgpt",
+            stream_name="",
+        )
+
+        logger.addHandler(console_handler)
+        logger.addHandler(self.cw_handler)
 
     def get_unsold_items(self) -> List[tuple[Deal, RawUsedItem]]:
         item = (
@@ -44,6 +60,15 @@ class SoldOutWatcher(scrapy.Spider):
             return Joonggonara.ARTICLE_API_URL % item.url.split("/")[-1]
         else:
             return BunJang.ARTICLE_API_URL % item.url.split("/")[-1]
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.flush_log, signal=signals.item_scraped)
+        return spider
+
+    def flush_log(self, item, response, spider):
+        self.cw_handler.flush()
 
     def start_requests(self):
         unsold_items = self.get_unsold_items()
@@ -83,10 +108,11 @@ class SoldOutWatcher(scrapy.Spider):
                 prod_status = root.data.product.saleStatus if root.data else "SOLD_OUT"
                 price = root.data.product.price if root.data else 0
 
+        self.cw_handler.log_stream_name = str(log_stream_id)
         yield ArticleStatus(
             id=item_id,
-            log_id=log_stream_id,
             price=price,
             resp_status=resp_status,
             prod_status=prod_status,
+            log_id=log_stream_id,
         )
