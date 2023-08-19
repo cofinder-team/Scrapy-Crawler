@@ -15,6 +15,8 @@ from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemIphone
 from scrapy_crawler.DBWatchDog.items import IphoneItem
 
+cloudwatchCallbackHandler = CloudWatchCallbackHandler()
+
 
 class GenerationClassifierPipeline:
     name = "GenerationClassifierPipeline"
@@ -36,9 +38,8 @@ class GenerationClassifierPipeline:
                 self.chain.run(
                     title=adapter["title"],
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name="scrapy-chatgpt",
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],
@@ -81,9 +82,8 @@ class ModelClassifierPipeline:
                     title=adapter["title"],
                     content=adapter["content"],
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name="scrapy-chatgpt",
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],
@@ -156,9 +156,8 @@ class StorageClassifierPipeline:
                     content=adapter["content"],
                     default_storage=default_storage,
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name="scrapy-chatgpt",
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],

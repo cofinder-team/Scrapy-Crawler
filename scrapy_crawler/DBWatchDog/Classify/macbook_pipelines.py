@@ -21,7 +21,7 @@ from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemMacbook
 from scrapy_crawler.DBWatchDog.items import MacbookItem
 
-log_group_name = "scrapy-chatgpt"
+cloudwatchCallbackHandler = CloudWatchCallbackHandler()
 
 
 class ModelClassifierPipeline:
@@ -43,9 +43,8 @@ class ModelClassifierPipeline:
                 title=adapter["title"],
                 content=adapter["content"],
                 callbacks=[
-                    CloudWatchCallbackHandler(
-                        log_group_name=log_group_name,
-                        log_stream_name=adapter["id"],
+                    cloudwatchCallbackHandler.set_meta_data(
+                        log_stream_name=str(adapter["id"]),
                         function_name=type(self).__name__,
                     )
                 ],
@@ -113,9 +112,8 @@ class ChipClassifierPipeline:
                     title=adapter["title"],
                     content=adapter["content"],
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name=log_group_name,
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],
@@ -171,9 +169,8 @@ class SystemClassifierPipeline:
                     default_ram=default_ram,
                     default_ssd=default_ssd,
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name=log_group_name,
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],

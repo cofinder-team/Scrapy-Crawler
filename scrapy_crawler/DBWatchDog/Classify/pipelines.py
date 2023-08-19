@@ -7,7 +7,6 @@ from scrapy.exceptions import DropItem, NotSupported
 from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
     apple_care_plus_chain,
@@ -20,7 +19,9 @@ from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
 from scrapy_crawler.common.utils.helpers import item_to_type
+from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
+cloudwatchCallbackHandler = CloudWatchCallbackHandler()
 
 
 class CategoryClassifierPipeline:
@@ -36,9 +37,8 @@ class CategoryClassifierPipeline:
         raw_result: str = self.chain.run(
             title=adapter["title"],
             callbacks=[
-                CloudWatchCallbackHandler(
-                    log_group_name=log_group_name,
-                    log_stream_name=adapter["id"],
+                cloudwatchCallbackHandler.set_meta_data(
+                    log_stream_name=str(adapter["id"]),
                     function_name=type(self).__name__,
                 )
             ],
@@ -80,9 +80,8 @@ class UnusedClassifierPipeline:
                 title=title,
                 content=content,
                 callbacks=[
-                    CloudWatchCallbackHandler(
-                        log_group_name=log_group_name,
-                        log_stream_name=adapter["id"],
+                    cloudwatchCallbackHandler.set_meta_data(
+                        log_stream_name=str(adapter["id"]),
                         function_name=type(self).__name__,
                     )
                 ],
@@ -123,9 +122,8 @@ class AppleCarePlusClassifierPipeline:
                     title=title,
                     content=content,
                     callbacks=[
-                        CloudWatchCallbackHandler(
-                            log_group_name=log_group_name,
-                            log_stream_name=adapter["id"],
+                        cloudwatchCallbackHandler.set_meta_data(
+                            log_stream_name=str(adapter["id"]),
                             function_name=type(self).__name__,
                         )
                     ],
