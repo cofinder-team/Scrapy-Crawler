@@ -1,3 +1,4 @@
+import ast
 import html
 import json
 from urllib import parse
@@ -14,8 +15,8 @@ from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleItem
 from scrapy_crawler.Joonggonara.utils.helpers import is_official_seller, is_selling
 
 
-class JgKeywordSpider(scrapy.Spider):
-    name = "JgKeywordSpider"
+class JgKeywordListSpider(scrapy.Spider):
+    name = "JgKeywordListSpider"
     custom_settings = {
         "ITEM_PIPELINES": {
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.DuplicateFilterPipeline": 1,
@@ -25,16 +26,17 @@ class JgKeywordSpider(scrapy.Spider):
         }
     }
 
-    def __init__(self, keyword=None, *args, **kwargs):
+    def __init__(self, keywords=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         init_cloudwatch_logger(self.name)
-        self.keyword = keyword
+        self.keywords: list = ast.literal_eval(keywords)
 
     def start_requests(self):
-        self.logger.info(f"Start crawling keyword: {self.keyword}")
-        yield scrapy.Request(
-            Joonggonara.TOTAL_SEARCH_FETCH_URL % parse.quote(self.keyword), self.parse
-        )
+        for keyword in self.keywords:
+            self.logger.info(f"Start crawling keyword: {keyword}")
+            yield scrapy.Request(
+                Joonggonara.TOTAL_SEARCH_FETCH_URL % parse.quote(keyword), self.parse
+            )
 
     def parse(self, response):
         json_response = json.loads(response.text)

@@ -1,5 +1,5 @@
 import logging
-from typing import Type, Optional
+from typing import Optional, Type
 
 import scrapy
 import watchtower
@@ -8,9 +8,9 @@ from scrapy.exceptions import DropItem
 from sqlalchemy import false, null, true
 from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.DBWatchDog.items import UnClassifiedItem
 from scrapy_crawler.common.db.models import RawUsedItem
 from scrapy_crawler.common.db.settings import get_engine
+from scrapy_crawler.DBWatchDog.items import UnClassifiedItem
 
 
 class ClassifyDog(scrapy.Spider):
@@ -87,7 +87,7 @@ class ClassifyDog(scrapy.Spider):
             .filter(RawUsedItem.classified == false())
             .filter(RawUsedItem.type == null())
             .filter(RawUsedItem.item_id == null())
-            .filter(RawUsedItem.title != null())
+            .filter(RawUsedItem.title != null())  # 당근마켓 메타 크롤링 데이터 제외
             .order_by(RawUsedItem.date)
             .limit(50)
         )

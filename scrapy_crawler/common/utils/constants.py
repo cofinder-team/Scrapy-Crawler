@@ -1,6 +1,11 @@
 CONSOLE_URL = "https://macguider.io/deals/admin/%s"
 NEW_CONSOLE_URL = "https://macguider.io/deals/report/%s"
 
+FAKE_HEADER = {
+    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/115.0.0.0 Mobile Safari/537.36"
+}
+
 
 class BunJang:
     TOTAL_SEARCH_API_URL = (
@@ -25,3 +30,7 @@ class Joonggonara:
     )
     ARTICLE_API_URL = "https://apis.naver.com/cafe-web/cafe-articleapi/v2.1/cafes/10050146/articles/%s"
     ARTICLE_URL = "https://cafe.naver.com/joonggonara/%s"
+
+
+class Daangn:
+    PROFILE_URL = "https://www.daangn.com/u/%s"

@@ -1,3 +1,4 @@
+import ast
 import json
 from typing import List
 from urllib import parse
@@ -12,8 +13,8 @@ from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 
 
-class BgKeywordSpider(scrapy.Spider):
-    name = "BgKeywordSpider"
+class BgKeywordListSpider(scrapy.Spider):
+    name = "BgKeywordListSpider"
     custom_settings = {
         "ITEM_PIPELINES": {
             "scrapy_crawler.Bungae.TotalSearch.pipelines.DuplicateFilterPipeline": 1,
@@ -22,16 +23,17 @@ class BgKeywordSpider(scrapy.Spider):
         }
     }
 
-    def __init__(self, keyword=None, *args, **kwargs):
+    def __init__(self, keywords=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         init_cloudwatch_logger(self.name)
-        self.keyword = keyword
+        self.keywords = ast.literal_eval(keywords)
 
     def start_requests(self):
-        self.logger.info(f"Start crawling keyword: {self.keyword}")
-        yield scrapy.Request(
-            BunJang.TOTAL_SEARCH_API_URL % parse.quote(self.keyword), self.parse
-        )
+        for keyword in self.keywords:
+            self.logger.info(f"Start crawling keyword: {keyword}")
+            yield scrapy.Request(
+                BunJang.TOTAL_SEARCH_API_URL % parse.quote(keyword), self.parse
+            )
 
     def parse(self, response):
         root = TotalSearchRoot.from_dict(json.loads(response.text))
