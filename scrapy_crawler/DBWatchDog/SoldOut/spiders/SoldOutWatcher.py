@@ -1,15 +1,16 @@
 import json
 import logging
-from typing import List, Optional, Type
+from typing import List, Optional
 
 import scrapy
 import watchtower
-from scrapy import signals
+from scrapy import Selector, signals
 from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.Bungae.metadata import article
 from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
+from scrapy_crawler.common.enums import DgArticleStatusEnum
 from scrapy_crawler.common.enums.SourceEnum import SourceEnum
 from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
