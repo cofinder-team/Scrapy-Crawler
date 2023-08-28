@@ -134,3 +134,12 @@ class ViewTrade(Base):
     price_20 = Column("price_20", Integer)
     price_80 = Column("price_80", Integer)
     cnt = Column("cnt", Integer)
+
+
+class DroppedItem(Base):
+    __tablename__ = "dropped_item"
+    id = Column(Integer, primary_key=True)
+    category = Column("category", String)
+    source = Column("source", String)
+    url = Column("url", String)
+    dropped_at = Column("dropped_at", String)
