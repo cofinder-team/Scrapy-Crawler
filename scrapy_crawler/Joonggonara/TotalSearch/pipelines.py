@@ -3,10 +3,8 @@ import logging
 from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
 from scrapy import Selector
-from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
-from scrapy_crawler.common.db.settings import get_engine
 from scrapy_crawler.common.utils import (
     has_forbidden_keyword,
     save_image_from_url,
@@ -16,6 +14,9 @@ from scrapy_crawler.common.utils.custom_exceptions import (
     DropDuplicateItem,
     DropForbiddenKeywordItem,
     DropTooLowPriceItem,
+)
+from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
+    JgKeywordSpider,
 )
 
 """
@@ -36,12 +37,6 @@ class DuplicateFilterPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def is_duplicated(self, adapter: ItemAdapter) -> bool:
         try:
             item = (
@@ -59,7 +54,8 @@ class DuplicateFilterPipeline:
             self.session.rollback()
             return False
 
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: JgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )
@@ -142,13 +138,8 @@ class PostgresExportPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: JgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )
