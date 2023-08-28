@@ -3,7 +3,6 @@ import logging
 from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
 from scrapy import Selector
-from scrapy.exceptions import DropItem
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
@@ -12,6 +11,11 @@ from scrapy_crawler.common.utils import (
     has_forbidden_keyword,
     save_image_from_url,
     too_low_price,
+)
+from scrapy_crawler.common.utils.custom_exceptions import (
+    DropDuplicateItem,
+    DropForbiddenKeywordItem,
+    DropTooLowPriceItem,
 )
 
 """
@@ -65,7 +69,9 @@ class DuplicateFilterPipeline:
             spider.logger.info(
                 f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Duplicate item found"
             )
-            raise DropItem("Duplicate item found: %s" % item["url"].split("/")[-1])
+            raise DropDuplicateItem(
+                "Duplicate item found: %s" % item["url"].split("/")[-1]
+            )
 
         return item
 
@@ -89,13 +95,13 @@ class ManualFilterPipeline:
             spider.logger.info(
                 f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Forbidden word found"
             )
-            raise DropItem("Forbidden word found: %s" % item["title"])
+            raise DropForbiddenKeywordItem("Forbidden word found: %s" % item["title"])
 
         if too_low_price(price):
             spider.logger.info(
                 f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too low price"
             )
-            raise DropItem("Too low price: %s" % item["price"])
+            raise DropTooLowPriceItem("Too low price: %s" % item["price"])
 
         return item
 

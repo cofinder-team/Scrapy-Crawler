@@ -3,6 +3,12 @@ from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db import RawUsedItem, get_engine
 from scrapy_crawler.common.utils.constants import BunJang
+from scrapy_crawler.common.utils.custom_exceptions import (
+    DropDuplicateItem,
+    DropForbiddenKeywordItem,
+    DropTooLongTextItem,
+    DropTooLowPriceItem,
+)
 from scrapy_crawler.common.utils.helpers import (
     has_forbidden_keyword,
     save_image_from_url,
@@ -41,7 +47,7 @@ class DuplicateFilterPipeline:
             spider.logger.info(
                 f"[{type(self).__name__}][{item['pid']}] Duplicate item found"
             )
-            raise DropItem(f"Duplicate item found: {item['pid']}")
+            raise DropDuplicateItem(f"Duplicate item found: {item['pid']}")
 
         return item
 
@@ -56,15 +62,15 @@ class ManualFilterPipeline:
             spider.logger.info(
                 f"[{type(self).__name__}][{item['pid']}] Has forbidden keyword"
             )
-            raise DropItem(f"Has forbidden keyword: {item['pid']}")
+            raise DropForbiddenKeywordItem(f"Has forbidden keyword: {item['pid']}")
 
         if too_low_price(item["price"]):
             spider.logger.info(f"[{type(self).__name__}][{item['pid']}] Too low price")
-            raise DropItem(f"Too low price: {item['pid']}")
+            raise DropTooLowPriceItem(f"Too low price: {item['pid']}")
 
         if too_long_text(item["content"]):
             spider.logger.info(f"[{type(self).__name__}][{item['pid']}] Too long text")
-            raise DropItem(f"Too long text: {item['pid']}")
+            raise DropTooLongTextItem(f"Too long text: {item['pid']}")
 
         return item
 
