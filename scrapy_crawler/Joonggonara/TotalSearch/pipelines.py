@@ -66,9 +66,6 @@ class DuplicateFilterPipeline:
         adapter = ItemAdapter(item)
 
         if self.is_duplicated(adapter):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Duplicate item found"
-            )
             raise DropDuplicateItem(
                 "Duplicate item found: %s" % item["url"].split("/")[-1]
             )
@@ -92,15 +89,9 @@ class ManualFilterPipeline:
         )
 
         if has_forbidden_keyword(title + content):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Forbidden word found"
-            )
             raise DropForbiddenKeywordItem("Forbidden word found: %s" % item["title"])
 
         if too_low_price(price):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too low price"
-            )
             raise DropTooLowPriceItem("Too low price: %s" % item["price"])
 
         return item

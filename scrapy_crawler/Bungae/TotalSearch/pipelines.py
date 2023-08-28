@@ -44,9 +44,6 @@ class DuplicateFilterPipeline:
         spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
 
         if self.has_duplicate(item):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['pid']}] Duplicate item found"
-            )
             raise DropDuplicateItem(f"Duplicate item found: {item['pid']}")
 
         return item
@@ -59,17 +56,12 @@ class ManualFilterPipeline:
         spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
 
         if has_forbidden_keyword(item["title"] + item["content"]):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['pid']}] Has forbidden keyword"
-            )
             raise DropForbiddenKeywordItem(f"Has forbidden keyword: {item['pid']}")
 
         if too_low_price(item["price"]):
-            spider.logger.info(f"[{type(self).__name__}][{item['pid']}] Too low price")
             raise DropTooLowPriceItem(f"Too low price: {item['pid']}")
 
         if too_long_text(item["content"]):
-            spider.logger.info(f"[{type(self).__name__}][{item['pid']}] Too long text")
             raise DropTooLongTextItem(f"Too long text: {item['pid']}")
 
         return item
