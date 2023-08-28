@@ -1,7 +1,7 @@
 from scrapy.exceptions import DropItem
-from sqlalchemy.orm import sessionmaker
 
-from scrapy_crawler.common.db import RawUsedItem, get_engine
+from scrapy_crawler.Bungae.TotalSearch.spiders.BgKeywordSpider import BgKeywordSpider
+from scrapy_crawler.common.db import RawUsedItem
 from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.custom_exceptions import (
     DropDuplicateItem,
@@ -23,12 +23,6 @@ class DuplicateFilterPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def has_duplicate(self, item):
         return (
             self.session.query(RawUsedItem)
@@ -40,7 +34,8 @@ class DuplicateFilterPipeline:
             is not None
         )
 
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: BgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
 
         if self.has_duplicate(item):
@@ -73,13 +68,8 @@ class PostgresExportPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: BgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(f"[{type(self).__name__}] start process_item {item['pid']}")
         try:
             self.session.add(

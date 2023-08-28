@@ -36,6 +36,9 @@ class BgKeywordSpider(scrapy.Spider):
         self.session = sessionmaker(bind=get_engine())()
         self.keyword = keyword
 
+    def close_spider(self, spider):
+        self.session.close()
+
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)
