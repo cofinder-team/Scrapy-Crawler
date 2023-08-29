@@ -4,8 +4,6 @@ from typing import Optional
 
 from itemadapter import ItemAdapter
 from langchain import LLMChain
-from scrapy.exceptions import DropItem
-from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
@@ -17,8 +15,8 @@ from scrapy_crawler.common.chatgpt.chains import (
     macbook_system_chain,
     macmini_chain,
 )
-from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemMacbook
+from scrapy_crawler.common.utils.custom_exceptions import DropUnsupportedMacbookItem
 from scrapy_crawler.DBWatchDog.items import MacbookItem
 
 cloudwatchCallbackHandler = CloudWatchCallbackHandler()
@@ -62,7 +60,7 @@ class ModelClassifierPipeline:
             return item
 
         except Exception as e:
-            raise DropItem(f"ModelClassifierPipeline: {e}")
+            raise DropUnsupportedMacbookItem(f"ModelClassifierPipeline: {e}")
 
 
 class ChipClassifierPipeline:
@@ -129,7 +127,7 @@ class ChipClassifierPipeline:
             return item
 
         except Exception as e:
-            raise DropItem(f"ChipClassifierPipeline: {e}")
+            raise DropUnsupportedMacbookItem(f"ChipClassifierPipeline: {e}")
 
 
 class SystemClassifierPipeline:
@@ -189,7 +187,7 @@ class SystemClassifierPipeline:
 
             return item
         except Exception as e:
-            raise DropItem(f"SystemClassifierPipeline: {e}")
+            raise DropUnsupportedMacbookItem(f"SystemClassifierPipeline: {e}")
 
 
 class MacbookClassifyPipeline:
@@ -209,12 +207,6 @@ class MacbookClassifyPipeline:
                 16: 5,
             },
         }
-
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
 
     def get_item_id(self, adapter) -> Optional[ItemMacbook]:
         try:
@@ -241,13 +233,16 @@ class MacbookClassifyPipeline:
         if not isinstance(item, MacbookItem):
             return item
 
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{adapter['id']}] start processing item"
         )
         item_id = self.get_item_id(adapter)
         if item_id is None:
-            raise DropItem(f"Item not found in database for {adapter['id']}")
+            raise DropUnsupportedMacbookItem(
+                f"Item not found in database for {adapter['id']}"
+            )
 
         adapter["item_id"] = item_id.id
 

@@ -3,15 +3,20 @@ import logging
 from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
 from scrapy import Selector
-from scrapy.exceptions import DropItem
-from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.db.models import RawUsedItem
-from scrapy_crawler.common.db.settings import get_engine
 from scrapy_crawler.common.utils import (
     has_forbidden_keyword,
     save_image_from_url,
     too_low_price,
+)
+from scrapy_crawler.common.utils.custom_exceptions import (
+    DropDuplicateItem,
+    DropForbiddenKeywordItem,
+    DropTooLowPriceItem,
+)
+from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
+    JgKeywordSpider,
 )
 
 """
@@ -32,12 +37,6 @@ class DuplicateFilterPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def is_duplicated(self, adapter: ItemAdapter) -> bool:
         try:
             item = (
@@ -55,17 +54,17 @@ class DuplicateFilterPipeline:
             self.session.rollback()
             return False
 
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: JgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )
         adapter = ItemAdapter(item)
 
         if self.is_duplicated(adapter):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Duplicate item found"
+            raise DropDuplicateItem(
+                "Duplicate item found: %s" % item["url"].split("/")[-1]
             )
-            raise DropItem("Duplicate item found: %s" % item["url"].split("/")[-1])
 
         return item
 
@@ -86,16 +85,10 @@ class ManualFilterPipeline:
         )
 
         if has_forbidden_keyword(title + content):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Forbidden word found"
-            )
-            raise DropItem("Forbidden word found: %s" % item["title"])
+            raise DropForbiddenKeywordItem("Forbidden word found: %s" % item["title"])
 
         if too_low_price(price):
-            spider.logger.info(
-                f"[{type(self).__name__}][{item['url'].split('/')[-1]}] Too low price"
-            )
-            raise DropItem("Too low price: %s" % item["price"])
+            raise DropTooLowPriceItem("Too low price: %s" % item["price"])
 
         return item
 
@@ -145,13 +138,8 @@ class PostgresExportPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
-    def process_item(self, item, spider):
+    def process_item(self, item, spider: JgKeywordSpider):
+        self.session = spider.session
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )

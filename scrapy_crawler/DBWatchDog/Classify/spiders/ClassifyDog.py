@@ -7,9 +7,15 @@ from scrapy import signals
 from scrapy.exceptions import DropItem
 from sqlalchemy import false, null, true
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
-from scrapy_crawler.common.db.models import RawUsedItem
+from scrapy_crawler.common.db.models import DroppedItem, RawUsedItem
 from scrapy_crawler.common.db.settings import get_engine
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
+from scrapy_crawler.common.utils.helpers import (
+    exception_to_category_code,
+    get_local_timestring,
+)
 from scrapy_crawler.DBWatchDog.items import UnClassifiedItem
 
 
@@ -44,6 +50,7 @@ class ClassifyDog(scrapy.Spider):
         super().__init__(**kwargs)
         self.cw_handler: Optional[watchtower.CloudWatchLogHandler] = None
         self.session = sessionmaker(bind=get_engine())()
+        self.exception_slack_bot = ExceptionSlackBot()
         self.init_cloudwatch_logger()
 
     def init_cloudwatch_logger(self):
@@ -58,25 +65,55 @@ class ClassifyDog(scrapy.Spider):
         logger.addHandler(console_handler)
         logger.addHandler(self.cw_handler)
 
+    def close_spider(self, spider):
+        self.session.close()
+
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)
 
         crawler.signals.connect(spider.item_scraped, signal=signals.item_scraped)
         crawler.signals.connect(spider.item_dropped, signal=signals.item_dropped)
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
         return spider
 
-    def item_dropped(self, item, response, exception: DropItem, spider):
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
+
+    def item_dropped(self, item, response, exception, spider):
+        if isinstance(exception, DropItem):
+            return
+
+        if (category_code := exception_to_category_code(exception)) is None:
+            logging.error(
+                f"[{type(self).__name__}] item dropped with unknown Error msg : {exception}"
+            )
+
         id = item["id"]
-        self.logger.info(
-            f"[{type(self).__name__}][{id}] item dropped with Error msg : {exception}"
-        )
-        self.session.query(RawUsedItem).filter(RawUsedItem.id == id).update(
-            {
-                RawUsedItem.classified: true(),
-            }
-        )
-        self.session.commit()
+        try:
+            self.session.query(RawUsedItem).filter(RawUsedItem.id == id).update(
+                {
+                    RawUsedItem.classified: true(),
+                }
+            )
+            self.session.commit()
+
+            self.session.add(
+                DroppedItem(
+                    source=item["source"],
+                    url=item["url"],
+                    category=category_code,
+                    dropped_at=get_local_timestring(),
+                )
+            )
+            self.session.commit()
+        except Exception:
+            logging.error(
+                f"[{type(self).__name__}] item dropped with unknown Error msg : {exception}"
+            )
+            self.session.rollback()
 
     def item_scraped(self, item, response, spider):
         self.cw_handler.flush()
