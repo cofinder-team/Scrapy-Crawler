@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Scrapyd를 설치합니다.
 RUN pip install scrapyd
+RUN pip install Twisted==22.10.0
 
 # Scrapyd의 설정 파일을 복사합니다.
 COPY scrapyd.conf /etc/scrapyd/
