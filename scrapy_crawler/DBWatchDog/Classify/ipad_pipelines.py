@@ -4,7 +4,6 @@ from typing import Optional
 
 from itemadapter import ItemAdapter
 from langchain import LLMChain
-from scrapy.exceptions import DropItem
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
@@ -16,6 +15,7 @@ from scrapy_crawler.common.chatgpt.chains import (
 )
 from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemIpad
+from scrapy_crawler.common.utils.custom_exceptions import DropUnsupportedIpadItem
 from scrapy_crawler.DBWatchDog.items import IpadItem
 
 cloudwatchCallbackHandler = CloudWatchCallbackHandler()
@@ -69,7 +69,7 @@ class ModelClassifierPipeline:
 
             return item
         except Exception as e:
-            raise DropItem(f"ModelClassifierPipeline: {e}")
+            raise DropUnsupportedIpadItem(f"ModelClassifierPipeline: {e}")
 
 
 class GenerationClassifierPipeline:
@@ -129,13 +129,13 @@ class GenerationClassifierPipeline:
                 adapter["generation"] = generation
 
             else:
-                raise DropItem(
+                raise DropUnsupportedIpadItem(
                     f"GenerationClassifierPipeline: {adapter['id']} generation not in generation map"
                 )
 
             return item
         except Exception as e:
-            raise DropItem(f"GenerationClassifierPipeline: {e}")
+            raise DropUnsupportedIpadItem(f"GenerationClassifierPipeline: {e}")
 
 
 class StorageClassifierPipeline:
@@ -214,7 +214,7 @@ class StorageClassifierPipeline:
 
             return item
         except Exception as e:
-            raise DropItem(f"StorageClassifierPipeline: {e}")
+            raise DropUnsupportedIpadItem(f"StorageClassifierPipeline: {e}")
 
 
 class CellularClassifierPipeline:
@@ -318,7 +318,9 @@ class IpadClassifyPipeline:
 
         ipadItem = self.get_item_id(adapter)
         if ipadItem is None:
-            raise DropItem(f"Item not found in database : {adapter['id']}")
+            raise DropUnsupportedIpadItem(
+                f"Item not found in database : {adapter['id']}"
+            )
         adapter["item_id"] = ipadItem.id
 
         return item

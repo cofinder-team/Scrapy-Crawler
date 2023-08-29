@@ -3,7 +3,7 @@ import logging
 import re
 
 from itemadapter import ItemAdapter
-from scrapy.exceptions import DropItem, NotSupported
+from scrapy.exceptions import DropItem
 from sqlalchemy import null
 from sqlalchemy.orm import sessionmaker
 
@@ -18,6 +18,10 @@ from scrapy_crawler.common.db.models import Deal, ViewTrade
 from scrapy_crawler.common.slack.SlackBots import LabelingSlackBot
 from scrapy_crawler.common.utils import get_local_timestring
 from scrapy_crawler.common.utils.constants import CONSOLE_URL, NEW_CONSOLE_URL
+from scrapy_crawler.common.utils.custom_exceptions import (
+    DropAndMarkItem,
+    DropUnsupportedCategoryItem,
+)
 from scrapy_crawler.common.utils.helpers import item_to_type
 from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
@@ -44,8 +48,9 @@ class CategoryClassifierPipeline:
             ],
         ).upper()
 
-        result: re.Match[bytes] | None = re.search(r"IPAD|MAC|IPHONE", raw_result)
-        try:
+        result = re.search(r"IPAD|MAC|IPHONE", raw_result)
+
+        if result:
             category = result.group().upper()
 
             if category == "MAC":
@@ -55,10 +60,9 @@ class CategoryClassifierPipeline:
             elif category == "IPHONE":
                 return IphoneItem(**adapter)
             else:
-                raise NotSupported(result)
-
-        except Exception as e:
-            raise DropItem(f"CategoryClassifierPipeline: {e}")
+                raise DropUnsupportedCategoryItem(result)
+        else:
+            raise DropUnsupportedCategoryItem("No category found")
 
 
 class UnusedClassifierPipeline:
@@ -110,31 +114,28 @@ class AppleCarePlusClassifierPipeline:
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
         )
-        apple_care = False
         title = adapter["title"]
         content = adapter["content"]
 
         regex = re.compile(r"애플케어플러스|애케플|애캐플|케어|캐어|CARE")
 
         if regex.search(title + content) is not None:
-            try:
-                predict = self.apple_care_plus_chain.run(
-                    title=title,
-                    content=content,
-                    callbacks=[
-                        cloudwatchCallbackHandler.set_meta_data(
-                            log_stream_name=str(adapter["id"]),
-                            function_name=type(self).__name__,
-                        )
-                    ],
-                )
+            predict = self.apple_care_plus_chain.run(
+                title=title,
+                content=content,
+                callbacks=[
+                    cloudwatchCallbackHandler.set_meta_data(
+                        log_stream_name=str(adapter["id"]),
+                        function_name=type(self).__name__,
+                    )
+                ],
+            )
 
-                apple_care = "TRUE" in predict.upper()
-            except Exception:
-                apple_care = False
+            apple_care = "TRUE" in predict.upper()
+        else:
+            apple_care = False
 
         adapter["apple_care_plus"] = apple_care
-
         return item
 
 
@@ -178,7 +179,7 @@ class PersistRawUsedItemPipeline:
             return item
         except Exception as e:
             self.session.rollback()
-            raise DropItem(f"[{type(self).__name__}][{item['id']}] {e}")
+            raise DropAndMarkItem(f"[{type(self).__name__}][{item['id']}] {e}")
 
 
 class LabelingAlertPipeline:
@@ -248,7 +249,8 @@ class LabelingAlertPipeline:
                 msg=msgs,
             )
 
-            raise NotSupported(f"[{type(self).__name__}][{item['id']}] {msgs}")
+            # Stop pipeline
+            raise DropItem(f"[{type(self).__name__}][{item['id']}] {msgs}")
 
         return item
 
@@ -317,7 +319,9 @@ class PersistDealPipeline:
             return item
         except Exception as e:
             self.session.rollback()
-            raise DropItem(f"[PersisPipeline] Can't update item: {adapter['id']}, {e}")
+            raise DropAndMarkItem(
+                f"[PersisPipeline] Can't update item: {adapter['id']}, {e}"
+            )
 
 
 class DealAlertPipeline:
