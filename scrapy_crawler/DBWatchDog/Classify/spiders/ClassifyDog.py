@@ -62,6 +62,9 @@ class ClassifyDog(scrapy.Spider):
         logger.addHandler(console_handler)
         logger.addHandler(self.cw_handler)
 
+    def close_spider(self, spider):
+        self.session.close()
+
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)

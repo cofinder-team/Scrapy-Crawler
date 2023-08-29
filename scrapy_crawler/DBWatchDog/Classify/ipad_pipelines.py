@@ -4,7 +4,6 @@ from typing import Optional
 
 from itemadapter import ItemAdapter
 from langchain import LLMChain
-from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
@@ -13,7 +12,6 @@ from scrapy_crawler.common.chatgpt.chains import (
     ipad_gen_chain,
     ipad_system_chain,
 )
-from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemIpad
 from scrapy_crawler.common.utils.custom_exceptions import DropUnsupportedIpadItem
 from scrapy_crawler.DBWatchDog.items import IpadItem
@@ -281,12 +279,6 @@ class IpadClassifyPipeline:
             },
         }
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def get_item_id(self, adapter) -> Optional[ItemIpad]:
         try:
             model_id = self.map[adapter["model"]][adapter["screen_size"]]
@@ -311,6 +303,7 @@ class IpadClassifyPipeline:
         if not isinstance(item, IpadItem):
             return item
 
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{adapter['id']}] start processing item"

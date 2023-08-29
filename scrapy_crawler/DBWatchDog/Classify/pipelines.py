@@ -103,13 +103,8 @@ class AppleCarePlusClassifierPipeline:
         self.apple_care_plus_chain = apple_care_plus_chain
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def process_item(self, item, spider):
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
@@ -145,13 +140,8 @@ class PersistRawUsedItemPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def process_item(self, item, spider):
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
@@ -189,12 +179,6 @@ class LabelingAlertPipeline:
         self.slack_bot = LabelingSlackBot()
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def has_multiple_generation(self, item) -> bool:
         title = item["title"]
         content = item["content"]
@@ -226,6 +210,7 @@ class LabelingAlertPipeline:
             return True
 
     def process_item(self, item, spider):
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"
@@ -261,13 +246,8 @@ class PersistDealPipeline:
     def __init__(self):
         self.session = None
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def process_item(self, item, spider):
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['id']}] start processing item"

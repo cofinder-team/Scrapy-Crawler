@@ -2,7 +2,6 @@ import re
 
 from itemadapter import ItemAdapter
 from langchain import LLMChain
-from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
 from scrapy_crawler.common.chatgpt.chains import (
@@ -10,7 +9,6 @@ from scrapy_crawler.common.chatgpt.chains import (
     iphone_model_chain,
     iphone_storage_chain,
 )
-from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemIphone
 from scrapy_crawler.common.utils.custom_exceptions import DropUnsupportedIphoneItem
 from scrapy_crawler.DBWatchDog.items import IphoneItem
@@ -186,16 +184,11 @@ class IphoneClassifyPipeline:
             "14": 14,
         }
 
-    def open_spider(self, spider):
-        self.session = sessionmaker(bind=get_engine())()
-
-    def close_spider(self, spider):
-        self.session.close()
-
     def process_item(self, item, spider):
         if not isinstance(item, IphoneItem):
             return item
 
+        self.session = spider.session
         adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{adapter['id']}] start processing item"
