@@ -7,9 +7,11 @@ from scrapy import signals
 from scrapy.exceptions import DropItem
 from sqlalchemy import false, null, true
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
 from scrapy_crawler.common.db.models import DroppedItem, RawUsedItem
 from scrapy_crawler.common.db.settings import get_engine
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils.helpers import (
     exception_to_category_code,
     get_local_timestring,
@@ -48,6 +50,7 @@ class ClassifyDog(scrapy.Spider):
         super().__init__(**kwargs)
         self.cw_handler: Optional[watchtower.CloudWatchLogHandler] = None
         self.session = sessionmaker(bind=get_engine())()
+        self.exception_slack_bot = ExceptionSlackBot()
         self.init_cloudwatch_logger()
 
     def init_cloudwatch_logger(self):
@@ -71,7 +74,13 @@ class ClassifyDog(scrapy.Spider):
 
         crawler.signals.connect(spider.item_scraped, signal=signals.item_scraped)
         crawler.signals.connect(spider.item_dropped, signal=signals.item_dropped)
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
         return spider
+
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
 
     def item_dropped(self, item, response, exception, spider):
         if isinstance(exception, DropItem):

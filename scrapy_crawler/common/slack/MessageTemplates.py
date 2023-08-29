@@ -20,3 +20,15 @@ def labeling_message_template(url: str, msg: str):
             },
         },
     ]
+
+
+def unhandled_message_template(spider_name: str, msg: str):
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"[{spider_name}] {msg}",
+            },
+        }
+    ]

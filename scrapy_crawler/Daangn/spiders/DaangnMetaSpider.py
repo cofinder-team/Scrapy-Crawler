@@ -1,13 +1,15 @@
 from typing import Type
 
 import scrapy
-from scrapy import Selector
+from scrapy import Selector, signals
 from scrapy.http import Response
 from sqlalchemy import null, true
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
 from scrapy_crawler.common.db import RawUsedItem, get_engine
 from scrapy_crawler.common.enums import DgArticleStatusEnum, SourceEnum
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.Daangn.items import ArticleItem
 
 
@@ -23,6 +25,19 @@ class DaangnMetaSpider(scrapy.Spider):
     def __init__(self):
         super().__init__()
         self.session = sessionmaker(bind=get_engine())()
+        self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
+        return spider
+
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
 
     def get_uncrawled_items(self) -> list[Type[RawUsedItem]]:
         items = (

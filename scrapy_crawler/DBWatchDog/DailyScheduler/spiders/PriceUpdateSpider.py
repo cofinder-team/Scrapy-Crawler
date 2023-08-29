@@ -1,11 +1,14 @@
 from typing import List
 
 import scrapy
+from scrapy import signals
 from sqlalchemy import null, true
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
 from scrapy_crawler.common.db import Deal, get_engine
 from scrapy_crawler.common.db.models import Trade
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
 
 
@@ -15,7 +18,20 @@ class PriceUpdateSpider(scrapy.Spider):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         init_cloudwatch_logger(self.name)
+        self.exception_slack_bot = ExceptionSlackBot()
         self.session = sessionmaker(bind=get_engine())()
+
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
+        return spider
+
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
 
     def start_requests(self):
         yield scrapy.Request(

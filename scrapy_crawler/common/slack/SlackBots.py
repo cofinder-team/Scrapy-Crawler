@@ -4,6 +4,7 @@ from slack_sdk import WebClient
 from scrapy_crawler.common.slack.MessageTemplates import (
     hotdeal_message_template,
     labeling_message_template,
+    unhandled_message_template,
 )
 
 
@@ -26,6 +27,22 @@ class LabelingSlackBot:
         result = self.slack_client.chat_postMessage(
             channel="hotdeal-alert",
             blocks=labeling_message_template(console_url, msg),
+        )
+
+        return result
+
+
+class ExceptionSlackBot:
+    def __init__(self):
+        self.settings = project.get_project_settings()
+        self.slack_token = self.settings.get("SLACK_BOT_LABELING_TOKEN")
+        self.slack_channel = self.settings.get("SLACK_CHANNEL_LABELING")
+        self.slack_client = WebClient(token=self.slack_token)
+
+    def post_unhandled_message(self, spider_name, msg):
+        result = self.slack_client.chat_postMessage(
+            channel="errors-scrapy",
+            blocks=unhandled_message_template(spider_name, msg),
         )
 
         return result
