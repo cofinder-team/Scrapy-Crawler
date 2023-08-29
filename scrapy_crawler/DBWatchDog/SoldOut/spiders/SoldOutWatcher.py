@@ -7,11 +7,13 @@ import watchtower
 from scrapy import Selector, signals
 from sqlalchemy import false, null
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
 from scrapy_crawler.Bungae.metadata import article
 from scrapy_crawler.common.db import Deal, RawUsedItem, get_engine
 from scrapy_crawler.common.enums import DgArticleStatusEnum
 from scrapy_crawler.common.enums.SourceEnum import SourceEnum
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils.constants import BunJang, Joonggonara
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleStatus
@@ -30,8 +32,14 @@ class SoldOutWatcher(scrapy.Spider):
         super().__init__(**kwargs)
         self.n = n
         self.cw_handler: Optional[watchtower.CloudWatchLogHandler] = None
+        self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
         self.session = sessionmaker(bind=get_engine())()
         self.init_cloudwatch_logger()
+
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
 
     def init_cloudwatch_logger(self):
         logger = logging.getLogger(self.name)
@@ -70,6 +78,7 @@ class SoldOutWatcher(scrapy.Spider):
     @classmethod
     def from_crawler(cls, crawler, *args, **kwargs):
         spider = super().from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
         crawler.signals.connect(spider.flush_log, signal=signals.item_scraped)
         return spider
 

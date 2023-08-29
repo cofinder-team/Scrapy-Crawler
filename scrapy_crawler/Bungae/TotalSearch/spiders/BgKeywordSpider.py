@@ -5,6 +5,7 @@ from urllib import parse
 import scrapy
 from scrapy import signals
 from sqlalchemy.orm import sessionmaker
+from twisted.python.failure import Failure
 
 from scrapy_crawler.Bungae.metadata.article import ArticleRoot
 from scrapy_crawler.Bungae.metadata.total_search import BgList, TotalSearchRoot
@@ -12,6 +13,7 @@ from scrapy_crawler.Bungae.TotalSearch.items import ArticleItem
 from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import DroppedItem, RawUsedItem
 from scrapy_crawler.common.enums import SourceEnum
+from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.helpers import (
     exception_to_category_code,
@@ -34,6 +36,7 @@ class BgKeywordSpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         init_cloudwatch_logger(self.name)
         self.session = sessionmaker(bind=get_engine())()
+        self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
         self.keyword = keyword
 
     def close_spider(self, spider):
@@ -44,7 +47,13 @@ class BgKeywordSpider(scrapy.Spider):
         spider = super().from_crawler(crawler, *args, **kwargs)
 
         crawler.signals.connect(spider.item_dropped, signal=signals.item_dropped)
+        crawler.signals.connect(spider.item_error, signal=signals.item_error)
         return spider
+
+    def item_error(self, item, response, spider, failure: Failure):
+        self.exception_slack_bot.post_unhandled_message(
+            spider.name, failure.getErrorMessage()
+        )
 
     def item_already_dropped(self, url) -> bool:
         return (
