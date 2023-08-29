@@ -4,9 +4,22 @@ from io import BytesIO
 
 import requests
 import watchtower
+from scrapy.exceptions import DropItem
 
-from scrapy_crawler.common.enums import TypeEnum
+from scrapy_crawler.common.enums.DroppedCategoryEnum import DroppedCategoryEnum
+from scrapy_crawler.common.enums.TypeEnum import TypeEnum
 from scrapy_crawler.common.utils.constants import FAKE_HEADER
+from scrapy_crawler.common.utils.custom_exceptions import (
+    DropAndMarkItem,
+    DropDuplicateItem,
+    DropForbiddenKeywordItem,
+    DropTooLongTextItem,
+    DropTooLowPriceItem,
+    DropUnsupportedCategoryItem,
+    DropUnsupportedIpadItem,
+    DropUnsupportedIphoneItem,
+    DropUnsupportedMacbookItem,
+)
 from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
 
@@ -83,3 +96,28 @@ def item_to_type(item: IpadItem | IphoneItem | MacbookItem) -> TypeEnum:
         return TypeEnum.MACBOOK
     else:
         raise ValueError(f"Unknown item type: {type(item)}")
+
+
+def exception_to_category_code(exception):
+    if isinstance(exception, DropDuplicateItem):
+        category_code = DroppedCategoryEnum.Duplicate.value
+    elif isinstance(exception, DropForbiddenKeywordItem):
+        category_code = DroppedCategoryEnum.ForbiddenKeyword.value
+    elif isinstance(exception, DropTooLongTextItem):
+        category_code = DroppedCategoryEnum.LongText.value
+    elif isinstance(exception, DropTooLowPriceItem):
+        category_code = DroppedCategoryEnum.LowPrice.value
+    elif isinstance(exception, DropUnsupportedCategoryItem):
+        category_code = DroppedCategoryEnum.UnsupportedCategory.value
+    elif isinstance(exception, DropUnsupportedIpadItem):
+        category_code = DroppedCategoryEnum.UnsupportedIpad.value
+    elif isinstance(exception, DropUnsupportedIphoneItem):
+        category_code = DroppedCategoryEnum.UnsupportedIphone.value
+    elif isinstance(exception, DropUnsupportedMacbookItem):
+        category_code = DroppedCategoryEnum.UnsupportedMacbook.value
+    elif isinstance(exception, DropItem) or isinstance(exception, DropAndMarkItem):
+        category_code = DroppedCategoryEnum.Unknown.value
+    else:
+        return None
+
+    return category_code

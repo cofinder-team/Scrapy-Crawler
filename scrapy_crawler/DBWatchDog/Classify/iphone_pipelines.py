@@ -2,7 +2,6 @@ import re
 
 from itemadapter import ItemAdapter
 from langchain import LLMChain
-from scrapy.exceptions import DropItem
 from sqlalchemy.orm import sessionmaker
 
 from scrapy_crawler.common.chatgpt.CallBacks import CloudWatchCallbackHandler
@@ -13,6 +12,7 @@ from scrapy_crawler.common.chatgpt.chains import (
 )
 from scrapy_crawler.common.db import get_engine
 from scrapy_crawler.common.db.models import ItemIphone
+from scrapy_crawler.common.utils.custom_exceptions import DropUnsupportedIphoneItem
 from scrapy_crawler.DBWatchDog.items import IphoneItem
 
 cloudwatchCallbackHandler = CloudWatchCallbackHandler()
@@ -50,7 +50,7 @@ class GenerationClassifierPipeline:
 
             generation = int(re.findall(r"\d+", predict)[0])
             if generation not in self.generations:
-                raise ValueError(
+                raise DropUnsupportedIphoneItem(
                     f"GenerationClassifierPipeline: {generation} not in {self.generations}"
                 )
 
@@ -58,7 +58,7 @@ class GenerationClassifierPipeline:
             return item
 
         except Exception as e:
-            raise DropItem(f"ModelClassifierPipeline: {e}")
+            raise DropUnsupportedIphoneItem(f"ModelClassifierPipeline: {e}")
 
 
 class ModelClassifierPipeline:
@@ -95,7 +95,7 @@ class ModelClassifierPipeline:
             model = re.findall(r"MODEL=(\S+)", predict)[0]
 
             if model not in self.models:
-                raise ValueError(
+                raise DropUnsupportedIphoneItem(
                     f"ModelClassifierPipeline: {model} not in {self.models}"
                 )
 
@@ -103,7 +103,7 @@ class ModelClassifierPipeline:
             return item
 
         except Exception as e:
-            raise DropItem(f"ModelClassifierPipeline: {e}")
+            raise DropUnsupportedIphoneItem(f"ModelClassifierPipeline: {e}")
 
 
 class StorageClassifierPipeline:
@@ -145,7 +145,7 @@ class StorageClassifierPipeline:
             model = adapter["model"]
 
             if self.storage_map.get(str(generation)).get(model) is None:
-                raise ValueError(
+                raise DropUnsupportedIphoneItem(
                     f"StorageClassifierPipeline: {generation} {model} not in {self.storage_map}"
                 )
 
@@ -172,7 +172,7 @@ class StorageClassifierPipeline:
             return item
 
         except Exception as e:
-            raise DropItem(f"ModelClassifierPipeline: {e}")
+            raise DropUnsupportedIphoneItem(f"ModelClassifierPipeline: {e}")
 
 
 class IphoneClassifyPipeline:
@@ -214,10 +214,12 @@ class IphoneClassifyPipeline:
                 .first()
             )
         except Exception as e:
-            raise DropItem(f"IphoneClassifyPipeline: {e}")
+            raise DropUnsupportedIphoneItem(f"IphoneClassifyPipeline: {e}")
 
         if entity is None:
-            raise DropItem(f"IphoneClassifyPipeline: {adapter['id']} not found")
+            raise DropUnsupportedIphoneItem(
+                f"IphoneClassifyPipeline: {adapter['id']} not found"
+            )
 
         item["item_id"] = entity.id
         return item
