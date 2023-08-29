@@ -98,7 +98,7 @@ def item_to_type(item: IpadItem | IphoneItem | MacbookItem) -> TypeEnum:
         raise ValueError(f"Unknown item type: {type(item)}")
 
 
-def exception_to_category_code(exception):
+def exception_to_category_code(exception: Any) -> Optional[str]:
     if isinstance(exception, DropDuplicateItem):
         category_code = DroppedCategoryEnum.Duplicate.value
     elif isinstance(exception, DropForbiddenKeywordItem):
