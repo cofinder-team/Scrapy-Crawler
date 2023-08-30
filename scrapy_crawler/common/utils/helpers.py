@@ -88,34 +88,34 @@ def too_long_text(text: str) -> bool:
 
 
 def item_to_type(item: IpadItem | IphoneItem | MacbookItem) -> TypeEnum:
-    if isinstance(item, IpadItem):
+    if type(item) == IpadItem:
         return TypeEnum.IPAD
-    elif isinstance(item, IphoneItem):
+    elif type(item) == IphoneItem:
         return TypeEnum.IPHONE
-    elif isinstance(item, MacbookItem):
+    elif type(item) == MacbookItem:
         return TypeEnum.MACBOOK
     else:
         raise ValueError(f"Unknown item type: {type(item)}")
 
 
 def exception_to_category_code(exception):
-    if isinstance(exception, DropDuplicateItem):
+    if type(exception) == DropDuplicateItem:
         category_code = DroppedCategoryEnum.Duplicate.value
-    elif isinstance(exception, DropForbiddenKeywordItem):
+    elif type(exception) == DropForbiddenKeywordItem:
         category_code = DroppedCategoryEnum.ForbiddenKeyword.value
-    elif isinstance(exception, DropTooLongTextItem):
+    elif type(exception) == DropTooLongTextItem:
         category_code = DroppedCategoryEnum.LongText.value
-    elif isinstance(exception, DropTooLowPriceItem):
+    elif type(exception) == DropTooLowPriceItem:
         category_code = DroppedCategoryEnum.LowPrice.value
-    elif isinstance(exception, DropUnsupportedCategoryItem):
+    elif type(exception) == DropUnsupportedCategoryItem:
         category_code = DroppedCategoryEnum.UnsupportedCategory.value
-    elif isinstance(exception, DropUnsupportedIpadItem):
+    elif type(exception) == DropUnsupportedIpadItem:
         category_code = DroppedCategoryEnum.UnsupportedIpad.value
-    elif isinstance(exception, DropUnsupportedIphoneItem):
+    elif type(exception) == DropUnsupportedIphoneItem:
         category_code = DroppedCategoryEnum.UnsupportedIphone.value
-    elif isinstance(exception, DropUnsupportedMacbookItem):
+    elif type(exception) == DropUnsupportedMacbookItem:
         category_code = DroppedCategoryEnum.UnsupportedMacbook.value
-    elif isinstance(exception, DropItem) or isinstance(exception, DropAndMarkItem):
+    elif type(exception) == DropItem or type(exception) == DropAndMarkItem:
         category_code = DroppedCategoryEnum.Unknown.value
     else:
         return None

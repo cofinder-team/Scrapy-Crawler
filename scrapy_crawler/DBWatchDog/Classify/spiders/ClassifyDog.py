@@ -83,7 +83,7 @@ class ClassifyDog(scrapy.Spider):
         )
 
     def item_dropped(self, item, response, exception, spider):
-        if isinstance(exception, DropItem):
+        if type(exception) == DropItem:
             return
 
         if (category_code := exception_to_category_code(exception)) is None:
