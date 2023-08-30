@@ -6,8 +6,6 @@ WORKDIR /app
 
 # Scrapyd를 설치합니다.
 RUN pip install scrapyd
-RUN pip install Twisted==22.10.0
-
 # Scrapyd의 설정 파일을 복사합니다.
 COPY scrapyd.conf /etc/scrapyd/
 
@@ -21,6 +19,7 @@ COPY ./requirements.txt /app/scrapy_crawler
 # 필요한 종속성을 설치합니다.
 RUN pip install -r /app/scrapy_crawler/requirements.txt
 RUN pip install scrapy
+RUN pip install Twisted==22.10.0
 
 # Scrapyd 서버의 포트를 노출합니다.
 EXPOSE 6800
