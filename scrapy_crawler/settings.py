@@ -41,7 +41,7 @@ COOKIES_ENABLED = True
 TELNETCONSOLE_ENABLED = False
 
 # Log level
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "INFO"
 SPIDER_MIDDLEWARES = {
     "scrapy.spidermiddlewares.referer.RefererMiddleware": None,
 }
