@@ -28,10 +28,11 @@ class JgKeywordSpider(scrapy.Spider):
     name = "JgKeywordSpider"
     custom_settings = {
         "ITEM_PIPELINES": {
-            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.DuplicateFilterPipeline": 1,
+            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.HtmlParserPipeline": 1,
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.ManualFilterPipeline": 2,
-            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.HtmlParserPipeline": 3,
-            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PostgresExportPipeline": 4,
+            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.DuplicateFilterPipeline": 3,
+            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PublishSQSPipeline": 4,
+            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PostgresExportPipeline": 5,
         }
     }
 
