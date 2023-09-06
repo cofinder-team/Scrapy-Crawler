@@ -20,6 +20,10 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_DATABASE = os.environ.get("DB_DATABASE")
 SLACK_BOT_LABELING_TOKEN = os.environ.get("SLACK_BOT_LABELING_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME")
+AWS_LIVE_QUEUE_NAME = os.environ.get("AWS_LIVE_QUEUE_NAME")
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = "scrapy_crawler (+http://www.yourdomain.com)"

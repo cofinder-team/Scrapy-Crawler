@@ -1,9 +1,11 @@
+import json
 import logging
 from datetime import datetime, timedelta
 from io import BytesIO
 
 import requests
 import watchtower
+from botocore.exceptions import ClientError
 from scrapy.exceptions import DropItem
 
 from scrapy_crawler.common.enums.DroppedCategoryEnum import DroppedCategoryEnum
@@ -121,3 +123,16 @@ def exception_to_category_code(exception):
         return None
 
     return category_code
+
+
+def publish_sqs_message(queue, message_body: dict):
+    try:
+        response = queue.send_message(
+            MessageBody=json.dumps(message_body), MessageGroupId=message_body["url"]
+        )
+
+    except ClientError as error:
+        logging.error(error)
+        raise error
+    else:
+        return response

@@ -15,6 +15,7 @@ from scrapy_crawler.common.utils.custom_exceptions import (
     DropForbiddenKeywordItem,
     DropTooLowPriceItem,
 )
+from scrapy_crawler.common.utils.helpers import publish_sqs_message
 from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
     JgKeywordSpider,
 )
@@ -29,6 +30,45 @@ from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
     3. HtmlParserPipeline - HTML 파싱
     4. PostgresExportPipeline - Postgres DB에 저장
 """
+
+
+class HtmlParserPipeline:
+    name = "HtmlParserPipeline"
+
+    def process_item(self, item, spider):
+        spider.logger.info(
+            f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
+        )
+        adapter = ItemAdapter(item)
+
+        selector = Selector(text=adapter["content"])
+
+        content = BeautifulSoup(
+            "\n".join(selector.css(".se-text-paragraph > span").getall()),
+            features="lxml",
+        ).get_text()
+
+        lines = content.split("\n")
+        filtered_lines = []
+        for line in lines:
+            line = line.strip()
+            if (
+                not line.startswith("👆")
+                and not line.startswith("※")
+                and not line.startswith("상단 중고나라")
+                and not line.startswith("위에 다운로드 ")
+                and not line.startswith("──")
+            ):
+                filtered_lines.append(line)
+
+        content = "\n".join(filtered_lines).replace("​", "")
+
+        item["content"] = content
+
+        # images = selector.css(".se-image-resource::attr(src)").getall()
+        # item["content"] = content + "\n[Image URLS]\n" + "\n".join(images)
+
+        return item
 
 
 class DuplicateFilterPipeline:
@@ -93,41 +133,27 @@ class ManualFilterPipeline:
         return item
 
 
-class HtmlParserPipeline:
-    name = "HtmlParserPipeline"
+class PublishSQSPipeline:
+    name = "PublishSQSPipeline"
 
     def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )
-        adapter = ItemAdapter(item)
 
-        selector = Selector(text=adapter["content"])
+        payload = {
+            "writer": adapter["writer"],
+            "title": adapter["title"],
+            "content": adapter["content"],
+            "price": adapter["price"],
+            "date": adapter["date"],
+            "url": adapter["url"],
+            "img_url": adapter["img_url"],
+            "source": adapter["source"],
+        }
 
-        content = BeautifulSoup(
-            "\n".join(selector.css(".se-text-paragraph > span").getall()),
-            features="lxml",
-        ).get_text()
-
-        lines = content.split("\n")
-        filtered_lines = []
-        for line in lines:
-            line = line.strip()
-            if (
-                not line.startswith("👆")
-                and not line.startswith("※")
-                and not line.startswith("상단 중고나라")
-                and not line.startswith("위에 다운로드 ")
-                and not line.startswith("──")
-            ):
-                filtered_lines.append(line)
-
-        content = "\n".join(filtered_lines).replace("​", "")
-
-        item["content"] = content
-
-        # images = selector.css(".se-image-resource::attr(src)").getall()
-        # item["content"] = content + "\n[Image URLS]\n" + "\n".join(images)
+        publish_sqs_message(spider.live_queue, payload)
 
         return item
 

@@ -2,8 +2,10 @@ import json
 from typing import List
 from urllib import parse
 
+import boto3
 import scrapy
 from scrapy import signals
+from scrapy.utils.project import get_project_settings
 from sqlalchemy.orm import sessionmaker
 from twisted.python.failure import Failure
 
@@ -18,7 +20,6 @@ from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.helpers import (
     exception_to_category_code,
     get_local_timestring,
-    init_cloudwatch_logger,
 )
 
 
@@ -28,13 +29,24 @@ class BgKeywordSpider(scrapy.Spider):
         "ITEM_PIPELINES": {
             "scrapy_crawler.Bungae.TotalSearch.pipelines.DuplicateFilterPipeline": 1,
             "scrapy_crawler.Bungae.TotalSearch.pipelines.ManualFilterPipeline": 2,
-            "scrapy_crawler.Bungae.TotalSearch.pipelines.PostgresExportPipeline": 3,
+            "scrapy_crawler.Bungae.TotalSearch.pipelines.PublishSQSPipeline": 3,
+            "scrapy_crawler.Bungae.TotalSearch.pipelines.PostgresExportPipeline": 4,
         }
     }
 
     def __init__(self, keyword=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        init_cloudwatch_logger(self.name)
+        settings = get_project_settings()
+        sqs = boto3.resource(
+            "sqs",
+            aws_access_key_id=settings["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=settings["AWS_SECRET_ACCESS_KEY"],
+            region_name=settings["AWS_REGION_NAME"],
+        )
+
+        self.live_queue = sqs.get_queue_by_name(
+            QueueName=settings["AWS_LIVE_QUEUE_NAME"]
+        )
         self.session = sessionmaker(bind=get_engine())()
         self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
         self.keyword = keyword
