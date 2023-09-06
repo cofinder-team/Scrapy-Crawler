@@ -15,6 +15,7 @@ from scrapy_crawler.common.utils.custom_exceptions import (
     DropForbiddenKeywordItem,
     DropTooLowPriceItem,
 )
+from scrapy_crawler.common.utils.helpers import publish_sqs_message
 from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
     JgKeywordSpider,
 )
@@ -132,12 +133,27 @@ class ManualFilterPipeline:
         return item
 
 
+class PublishSQSPipeline:
+    name = "PublishSQSPipeline"
 
     def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
         spider.logger.info(
             f"[{type(self).__name__}][{item['url'].split('/')[-1]}] start process_item"
         )
 
+        payload = {
+            "writer": adapter["writer"],
+            "title": adapter["title"],
+            "content": adapter["content"],
+            "price": adapter["price"],
+            "date": adapter["date"],
+            "url": adapter["url"],
+            "img_url": adapter["img_url"],
+            "source": adapter["source"],
+        }
+
+        publish_sqs_message(spider.live_queue, payload)
 
         return item
 
