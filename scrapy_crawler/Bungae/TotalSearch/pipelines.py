@@ -1,3 +1,4 @@
+from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 
 from scrapy_crawler.Bungae.TotalSearch.spiders.BgKeywordSpider import BgKeywordSpider
@@ -11,6 +12,7 @@ from scrapy_crawler.common.utils.custom_exceptions import (
 )
 from scrapy_crawler.common.utils.helpers import (
     has_forbidden_keyword,
+    publish_sqs_message,
     save_image_from_url,
     too_long_text,
     too_low_price,
@@ -58,6 +60,29 @@ class ManualFilterPipeline:
 
         if too_long_text(item["content"]):
             raise DropTooLongTextItem(f"Too long text: {item['pid']}")
+
+        return item
+
+
+class PublishSQSPipeline:
+    name = "PublishSQSPipeline"
+
+    def process_item(self, item, spider):
+        adapter = ItemAdapter(item)
+        spider.logger.info(f"[{type(self).__name__}][{item['pid']}] start process_item")
+
+        payload = {
+            "writer": adapter["writer"],
+            "title": adapter["title"],
+            "content": adapter["content"],
+            "price": adapter["price"],
+            "date": adapter["date"],
+            "url": BunJang.ARTICLE_URL % str(adapter["pid"]),
+            "img_url": adapter["img_url"],
+            "source": adapter["source"],
+        }
+
+        publish_sqs_message(spider.live_queue, payload)
 
         return item
 
