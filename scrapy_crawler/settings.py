@@ -23,6 +23,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME")
+AWS_DEFAULT_REGION = os.environ.get("AWS_REGION_NAME")
 AWS_LIVE_QUEUE_NAME = os.environ.get("AWS_LIVE_QUEUE_NAME")
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
