@@ -44,7 +44,6 @@ class PriceUpdateSpider(scrapy.Spider):
             self.session.query(Deal)
             .filter(Deal.sold == true())
             .filter(Deal.deleted_at == null())
-            .filter(Deal.condition == "S")
         )
         return item.all()
 
