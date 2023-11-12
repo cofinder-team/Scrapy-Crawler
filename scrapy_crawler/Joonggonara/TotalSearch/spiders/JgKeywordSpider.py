@@ -10,15 +10,12 @@ from sqlalchemy.orm import sessionmaker
 from twisted.python.failure import Failure
 
 from scrapy_crawler.common.db import get_engine
-from scrapy_crawler.common.db.models import DroppedItem, RawUsedItem
+from scrapy_crawler.common.db.models import LogCrawler
 from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils import to_local_timestring
 from scrapy_crawler.common.utils.constants import Joonggonara
-from scrapy_crawler.common.utils.helpers import (
-    exception_to_category_code,
-    get_local_timestring,
-)
+from scrapy_crawler.common.utils.helpers import get_local_timestring
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.metadata.total_search import TotalSearchRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleItem
@@ -70,39 +67,22 @@ class JgKeywordSpider(scrapy.Spider):
             spider.name, failure.getErrorMessage()
         )
 
-    def item_already_dropped(self, url) -> bool:
-        return (
-            self.session.query(DroppedItem)
-            .filter(DroppedItem.source == SourceEnum.JOONGGONARA.value)
-            .filter(DroppedItem.url == url)
-            .first()
-            is not None
-        )
-
     def item_already_crawled(self, url) -> bool:
         return (
-            self.session.query(RawUsedItem)
-            .filter(RawUsedItem.url == url)
-            .filter(RawUsedItem.source == SourceEnum.JOONGGONARA.value)
-            .first()
+            self.session.query(LogCrawler).filter(LogCrawler.url == url).first()
             is not None
         )
 
     def item_dropped(self, item, response, exception, spider):
-        if self.item_already_dropped(item["url"]) or (
-            (category_code := exception_to_category_code(exception)) is None
-        ):
-            return
-
         self.logger.info(f"Item dropped: {exception.__class__.__name__}")
 
         try:
             self.session.add(
-                DroppedItem(
+                LogCrawler(
                     source=SourceEnum.JOONGGONARA.value,
-                    category=category_code,
+                    item_status=f"DROPPED_{exception.__class__.__name__}",
                     url=item["url"],
-                    dropped_at=get_local_timestring(),
+                    created_at=get_local_timestring(),
                 )
             )
 
@@ -134,9 +114,7 @@ class JgKeywordSpider(scrapy.Spider):
         for article in target_articles:
             article_url = Joonggonara.ARTICLE_URL % article.articleId
 
-            if self.item_already_crawled(article_url) or self.item_already_dropped(
-                article_url
-            ):
+            if self.item_already_crawled(article_url):
                 continue
 
             yield scrapy.Request(
