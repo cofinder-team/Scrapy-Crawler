@@ -26,7 +26,7 @@ class BgKeywordSpider(scrapy.Spider):
         "ITEM_PIPELINES": {
             "scrapy_crawler.Bungae.TotalSearch.pipelines.DuplicateFilterPipeline": 1,
             "scrapy_crawler.Bungae.TotalSearch.pipelines.ManualFilterPipeline": 2,
-            "scrapy_crawler.Bungae.TotalSearch.pipelines.PublishSQSPipeline": 3,
+            # "scrapy_crawler.Bungae.TotalSearch.pipelines.PublishSQSPipeline": 3,
             "scrapy_crawler.Bungae.TotalSearch.pipelines.PostgresExportPipeline": 4,
         }
     }
