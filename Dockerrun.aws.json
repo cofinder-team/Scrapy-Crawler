@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "238681318294.dkr.ecr.ap-northeast-2.amazonaws.com/confinder-scrapy:latest",
+    "Name": "183743639527.dkr.ecr.ap-northeast-2.amazonaws.com/cofinder-scrapy:latest",
     "Update": "true"
   },
   "Ports": [
