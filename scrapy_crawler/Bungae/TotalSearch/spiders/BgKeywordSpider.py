@@ -2,10 +2,8 @@ import json
 from typing import List
 from urllib import parse
 
-import boto3
 import scrapy
 from scrapy import signals
-from scrapy.utils.project import get_project_settings
 from sqlalchemy.orm import sessionmaker
 from twisted.python.failure import Failure
 
@@ -33,17 +31,17 @@ class BgKeywordSpider(scrapy.Spider):
 
     def __init__(self, keyword=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        settings = get_project_settings()
-        sqs = boto3.resource(
-            "sqs",
-            aws_access_key_id=settings["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=settings["AWS_SECRET_ACCESS_KEY"],
-            region_name=settings["AWS_REGION_NAME"],
-        )
-
-        self.live_queue = sqs.get_queue_by_name(
-            QueueName=settings["AWS_LIVE_QUEUE_NAME"]
-        )
+        # settings = get_project_settings()
+        # sqs = boto3.resource(
+        #     "sqs",
+        #     aws_access_key_id=settings["AWS_ACCESS_KEY_ID"],
+        #     aws_secret_access_key=settings["AWS_SECRET_ACCESS_KEY"],
+        #     region_name=settings["AWS_REGION_NAME"],
+        # )
+        #
+        # self.live_queue = sqs.get_queue_by_name(
+        #     QueueName=settings["AWS_LIVE_QUEUE_NAME"]
+        # )
         self.session = sessionmaker(bind=get_engine())()
         self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
         self.keyword = keyword
