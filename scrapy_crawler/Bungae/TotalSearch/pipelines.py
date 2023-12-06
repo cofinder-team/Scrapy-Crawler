@@ -2,7 +2,8 @@ from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
 
 from scrapy_crawler.Bungae.TotalSearch.spiders.BgKeywordSpider import BgKeywordSpider
-from scrapy_crawler.common.db import RawUsedItem
+from scrapy_crawler.common.db.models import LogCrawler
+from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.utils.constants import BunJang
 from scrapy_crawler.common.utils.custom_exceptions import (
     DropDuplicateItem,
@@ -11,9 +12,9 @@ from scrapy_crawler.common.utils.custom_exceptions import (
     DropTooLowPriceItem,
 )
 from scrapy_crawler.common.utils.helpers import (
+    get_local_timestring,
     has_forbidden_keyword,
     publish_sqs_message,
-    save_image_from_url,
     too_long_text,
     too_low_price,
 )
@@ -27,11 +28,8 @@ class DuplicateFilterPipeline:
 
     def has_duplicate(self, item):
         return (
-            self.session.query(RawUsedItem)
-            .filter(
-                RawUsedItem.url == BunJang.ARTICLE_URL % str(item["pid"])
-                or RawUsedItem.title == item["title"]
-            )
+            self.session.query(LogCrawler)
+            .filter(LogCrawler.url == BunJang.ARTICLE_URL % str(item["pid"]))
             .first()
             is not None
         )
@@ -98,17 +96,11 @@ class PostgresExportPipeline:
         spider.logger.info(f"[{type(self).__name__}] start process_item {item['pid']}")
         try:
             self.session.add(
-                RawUsedItem(
-                    writer=item["writer"],
-                    title=item["title"],
-                    content=item["content"],
-                    price=item["price"],
-                    date=item["date"],
-                    source=item["source"],
+                LogCrawler(
                     url=BunJang.ARTICLE_URL % str(item["pid"]),
-                    img_url=item["img_url"],
-                    image=save_image_from_url(item["img_url"]).getvalue(),
-                    raw_json=item["raw_json"],
+                    source=SourceEnum.BUNGAE.value,
+                    created_at=get_local_timestring(),
+                    item_status="CRAWLED",
                 )
             )
 

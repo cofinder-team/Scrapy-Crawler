@@ -4,12 +4,9 @@ from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
 from scrapy import Selector
 
-from scrapy_crawler.common.db.models import RawUsedItem
-from scrapy_crawler.common.utils import (
-    has_forbidden_keyword,
-    save_image_from_url,
-    too_low_price,
-)
+from scrapy_crawler.common.db.models import LogCrawler
+from scrapy_crawler.common.enums import SourceEnum
+from scrapy_crawler.common.utils import has_forbidden_keyword, too_low_price
 from scrapy_crawler.common.utils.custom_exceptions import (
     DropDuplicateItem,
     DropForbiddenKeywordItem,
@@ -65,9 +62,6 @@ class HtmlParserPipeline:
 
         item["content"] = content
 
-        # images = selector.css(".se-image-resource::attr(src)").getall()
-        # item["content"] = content + "\n[Image URLS]\n" + "\n".join(images)
-
         return item
 
 
@@ -80,11 +74,8 @@ class DuplicateFilterPipeline:
     def is_duplicated(self, adapter: ItemAdapter) -> bool:
         try:
             item = (
-                self.session.query(RawUsedItem)
-                .filter(
-                    RawUsedItem.url == adapter["url"]
-                    or RawUsedItem.title == adapter["title"]
-                )
+                self.session.query(LogCrawler)
+                .filter(LogCrawler.url == adapter["url"])
                 .first()
             )
             return item is not None
@@ -172,20 +163,12 @@ class PostgresExportPipeline:
         adapter = ItemAdapter(item)
 
         try:
-            image = save_image_from_url(adapter["img_url"] + "?type=w300")
-
             self.session.add(
-                RawUsedItem(
-                    writer=adapter["writer"],
-                    title=adapter["title"],
-                    content=adapter["content"],
-                    price=adapter["price"],
-                    date=adapter["date"],
+                LogCrawler(
+                    item_status="CRAWLED",
+                    source=SourceEnum.JOONGGONARA.value,
                     url=adapter["url"],
-                    img_url=adapter["img_url"],
-                    source=adapter["source"],
-                    image=image.getvalue(),
-                    raw_json=adapter["raw_json"],
+                    created_at=adapter["date"],
                 )
             )
             self.session.commit()
