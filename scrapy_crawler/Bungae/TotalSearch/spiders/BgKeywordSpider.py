@@ -75,7 +75,7 @@ class BgKeywordSpider(scrapy.Spider):
             self.session.add(
                 LogCrawler(
                     url=BunJang.ARTICLE_URL % str(item["pid"]),
-                    crawled_at=get_local_timestring(),
+                    created_at=get_local_timestring(),
                     source=SourceEnum.BUNGAE.value,
                     item_status=f"DROPPED_{exception.__class__.__name__}",
                 )
