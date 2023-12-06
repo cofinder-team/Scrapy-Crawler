@@ -22,7 +22,7 @@ PREFIX = "scrapy_crawler/common/chatgpt/prompts/%s"
 GPT4_MODEL_NAME = "gpt-4-0613"
 GPT3_MODEL_NAME = "gpt-3.5-turbo-0613"
 unused_chain: LLMChain = create_llm_chain(
-    GPT4_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
+    GPT3_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
 )
 apple_care_plus_chain: LLMChain = create_llm_chain(
     GPT3_MODEL_NAME, PREFIX % "apple_care_plus.txt", ["title", "content"]
@@ -64,7 +64,7 @@ ipad_system_chain: LLMChain = create_llm_chain(
     GPT3_MODEL_NAME, PREFIX % "ipad_system.txt", ["title", "content", "default_ssd"]
 )
 ipad_cellular_chain: LLMChain = create_llm_chain(
-    GPT4_MODEL_NAME, PREFIX % "ipad_cellular.txt", ["title", "content"]
+    GPT3_MODEL_NAME, PREFIX % "ipad_cellular.txt", ["title", "content"]
 )
 
 iphone_generation_chain = create_llm_chain(

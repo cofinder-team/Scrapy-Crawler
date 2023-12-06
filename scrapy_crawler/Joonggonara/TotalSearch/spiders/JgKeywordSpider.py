@@ -2,23 +2,19 @@ import html
 import json
 from urllib import parse
 
-import boto3
+# import boto3
 import scrapy
 from scrapy import signals
-from scrapy.utils.project import get_project_settings
 from sqlalchemy.orm import sessionmaker
 from twisted.python.failure import Failure
 
 from scrapy_crawler.common.db import get_engine
-from scrapy_crawler.common.db.models import DroppedItem, RawUsedItem
+from scrapy_crawler.common.db.models import LogCrawler
 from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
 from scrapy_crawler.common.utils import to_local_timestring
 from scrapy_crawler.common.utils.constants import Joonggonara
-from scrapy_crawler.common.utils.helpers import (
-    exception_to_category_code,
-    get_local_timestring,
-)
+from scrapy_crawler.common.utils.helpers import get_local_timestring
 from scrapy_crawler.Joonggonara.metadata.article import ArticleRoot
 from scrapy_crawler.Joonggonara.metadata.total_search import TotalSearchRoot
 from scrapy_crawler.Joonggonara.TotalSearch.items import ArticleItem
@@ -32,24 +28,24 @@ class JgKeywordSpider(scrapy.Spider):
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.HtmlParserPipeline": 1,
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.ManualFilterPipeline": 2,
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.DuplicateFilterPipeline": 3,
-            "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PublishSQSPipeline": 4,
+            # "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PublishSQSPipeline": 4,
             "scrapy_crawler.Joonggonara.TotalSearch.pipelines.PostgresExportPipeline": 5,
         }
     }
 
     def __init__(self, keyword=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        settings = get_project_settings()
-        sqs = boto3.resource(
-            "sqs",
-            aws_access_key_id=settings["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=settings["AWS_SECRET_ACCESS_KEY"],
-            region_name=settings["AWS_REGION_NAME"],
-        )
-
-        self.live_queue = sqs.get_queue_by_name(
-            QueueName=settings["AWS_LIVE_QUEUE_NAME"]
-        )
+        # settings = get_project_settings()
+        # sqs = boto3.resource(
+        #     "sqs",
+        #     aws_access_key_id=settings["AWS_ACCESS_KEY_ID"],
+        #     aws_secret_access_key=settings["AWS_SECRET_ACCESS_KEY"],
+        #     region_name=settings["AWS_REGION_NAME"],
+        # )
+        #
+        # self.live_queue = sqs.get_queue_by_name(
+        #     QueueName=settings["AWS_LIVE_QUEUE_NAME"]
+        # )
         self.session = sessionmaker(bind=get_engine())()
         self.exception_slack_bot: ExceptionSlackBot = ExceptionSlackBot()
         self.keyword = keyword
@@ -70,39 +66,22 @@ class JgKeywordSpider(scrapy.Spider):
             spider.name, failure.getErrorMessage()
         )
 
-    def item_already_dropped(self, url) -> bool:
-        return (
-            self.session.query(DroppedItem)
-            .filter(DroppedItem.source == SourceEnum.JOONGGONARA.value)
-            .filter(DroppedItem.url == url)
-            .first()
-            is not None
-        )
-
     def item_already_crawled(self, url) -> bool:
         return (
-            self.session.query(RawUsedItem)
-            .filter(RawUsedItem.url == url)
-            .filter(RawUsedItem.source == SourceEnum.JOONGGONARA.value)
-            .first()
+            self.session.query(LogCrawler).filter(LogCrawler.url == url).first()
             is not None
         )
 
     def item_dropped(self, item, response, exception, spider):
-        if self.item_already_dropped(item["url"]) or (
-            (category_code := exception_to_category_code(exception)) is None
-        ):
-            return
-
         self.logger.info(f"Item dropped: {exception.__class__.__name__}")
 
         try:
             self.session.add(
-                DroppedItem(
+                LogCrawler(
                     source=SourceEnum.JOONGGONARA.value,
-                    category=category_code,
+                    item_status=f"DROPPED_{exception.__class__.__name__}",
                     url=item["url"],
-                    dropped_at=get_local_timestring(),
+                    created_at=get_local_timestring(),
                 )
             )
 
@@ -134,9 +113,7 @@ class JgKeywordSpider(scrapy.Spider):
         for article in target_articles:
             article_url = Joonggonara.ARTICLE_URL % article.articleId
 
-            if self.item_already_crawled(article_url) or self.item_already_dropped(
-                article_url
-            ):
+            if self.item_already_crawled(article_url):
                 continue
 
             yield scrapy.Request(

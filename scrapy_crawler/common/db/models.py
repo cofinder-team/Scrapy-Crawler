@@ -143,3 +143,12 @@ class DroppedItem(Base):
     source = Column("source", String)
     url = Column("url", String)
     dropped_at = Column("dropped_at", String)
+
+
+class LogCrawler(Base):
+    __tablename__ = "log_crawler"
+    id = Column(Integer, primary_key=True)
+    item_status = Column("item_status", String)
+    source = Column("source", String)
+    url = Column("url", String)
+    created_at = Column("created_at", String)
