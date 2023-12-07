@@ -11,6 +11,6 @@ scrapyd
 slack_sdk
 boto3
 scrapeops_scrapy
-openai
+openai==1.3.3
 pre-commit
 watchtower
