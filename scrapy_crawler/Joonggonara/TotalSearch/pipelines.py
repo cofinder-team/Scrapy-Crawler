@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from itemadapter import ItemAdapter
 from scrapy import Selector
 
-from scrapy_crawler.common.db.models import LogCrawler
+from scrapy_crawler.common.db.models import LogCrawler, RawUsedItem
 from scrapy_crawler.common.enums import SourceEnum
 from scrapy_crawler.common.utils import has_forbidden_keyword, too_low_price
 from scrapy_crawler.common.utils.custom_exceptions import (
@@ -12,7 +12,7 @@ from scrapy_crawler.common.utils.custom_exceptions import (
     DropForbiddenKeywordItem,
     DropTooLowPriceItem,
 )
-from scrapy_crawler.common.utils.helpers import publish_sqs_message
+from scrapy_crawler.common.utils.helpers import publish_sqs_message, save_image_from_url
 from scrapy_crawler.Joonggonara.TotalSearch.spiders.JgKeywordSpider import (
     JgKeywordSpider,
 )
@@ -169,6 +169,22 @@ class PostgresExportPipeline:
                     source=SourceEnum.JOONGGONARA.value,
                     url=adapter["url"],
                     created_at=adapter["date"],
+                )
+            )
+            image = save_image_from_url(adapter["img_url"] + "?type=w300")
+
+            self.session.add(
+                RawUsedItem(
+                    writer=adapter["writer"],
+                    title=adapter["title"],
+                    content=adapter["content"],
+                    price=adapter["price"],
+                    date=adapter["date"],
+                    url=adapter["url"],
+                    img_url=adapter["img_url"],
+                    source=adapter["source"],
+                    image=image.getvalue(),
+                    raw_json=adapter["raw_json"],
                 )
             )
             self.session.commit()
