@@ -40,9 +40,7 @@ class ClassifyDog(scrapy.Spider):
             "scrapy_crawler.DBWatchDog.Classify.macbook_pipelines.MacbookClassifyPipeline": 15,
             "scrapy_crawler.DBWatchDog.Classify.iphone_pipelines.IphoneClassifyPipeline": 16,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistRawUsedItemPipeline": 17,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.LabelingAlertPipeline": 18,
             "scrapy_crawler.DBWatchDog.Classify.pipelines.PersistDealPipeline": 19,
-            "scrapy_crawler.DBWatchDog.Classify.pipelines.DealAlertPipeline": 20,
         },
     }
 
