@@ -559,7 +559,7 @@ class Writer:
         _baMemberKey = str(obj.get("baMemberKey"))
         _nick = str(obj.get("nick"))
         _image = Image.from_dict(obj.get("image"))
-        _memberLevel = int(obj.get("memberLevel"))
+        _memberLevel = int(obj.get("memberLevel")) if obj.get("memberLevel") else 0
         _memberLevelName = str(obj.get("memberLevelName"))
         _memberLevelIconUrl = str(obj.get("memberLevelIconUrl"))
         _currentPopularMember = obj.get("currentPopularMember")
