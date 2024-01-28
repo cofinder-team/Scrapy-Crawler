@@ -20,7 +20,7 @@ def create_llm_chain(model_name: str, template_path: str, input_variables: list[
 
 PREFIX = "scrapy_crawler/common/chatgpt/prompts/%s"
 GPT4_MODEL_NAME = "gpt-4-0613"
-GPT3_MODEL_NAME = "gpt-3.5-turbo-0613"
+GPT3_MODEL_NAME = "gpt-3.5-turbo-1106"
 unused_chain: LLMChain = create_llm_chain(
     GPT3_MODEL_NAME, PREFIX % "unused.txt", ["title", "content"]
 )
