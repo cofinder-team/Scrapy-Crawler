@@ -25,8 +25,8 @@ from scrapy_crawler.common.utils.custom_exceptions import (
 from scrapy_crawler.DBWatchDog.items import IpadItem, IphoneItem, MacbookItem
 
 
-def get_local_timestring() -> str:
-    return (datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+def get_local_timestring(days: int = 0) -> str:
+    return (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def get_timestamp() -> int:
