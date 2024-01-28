@@ -9,7 +9,10 @@ from twisted.python.failure import Failure
 from scrapy_crawler.common.db import Deal, get_engine
 from scrapy_crawler.common.db.models import Trade
 from scrapy_crawler.common.slack.SlackBots import ExceptionSlackBot
-from scrapy_crawler.common.utils.helpers import init_cloudwatch_logger
+from scrapy_crawler.common.utils.helpers import (
+    get_local_timestring,
+    init_cloudwatch_logger,
+)
 
 
 class PriceUpdateSpider(scrapy.Spider):
@@ -44,6 +47,7 @@ class PriceUpdateSpider(scrapy.Spider):
             self.session.query(Deal)
             .filter(Deal.sold == true())
             .filter(Deal.deleted_at == null())
+            .filter(Deal.last_crawled >= get_local_timestring(days=-1))
         )
         return item.all()
 
